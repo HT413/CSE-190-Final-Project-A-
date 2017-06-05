@@ -26,6 +26,7 @@ public:
 	void parse(const char* filepath);
 	void draw(GLuint shaderProgram);
 	void setMaterial(Material* a, Material* b){ mat = a; a_mat = b; }
+	void setModel(mat4 m){ model = m; }
 };
 
 #endif

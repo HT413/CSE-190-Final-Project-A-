@@ -70,7 +70,7 @@ void setup_opengl_settings()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ALPHA);
 	// Set clear color
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 void print_versions()

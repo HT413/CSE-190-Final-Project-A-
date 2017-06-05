@@ -128,7 +128,7 @@ void initObjects(){
 	srand(rand() % 32768);
 
 	// Create the model
-	test_obj = new OBJObject("objects/bunny.obj");
+	test_obj = new OBJObject("objects/tank_T72.obj");
 
 	// Lights
 	numLights = 2;
@@ -160,6 +160,7 @@ void initObjects(){
 	gold_Ashikhmin->getUniformLocs(ashikhminShader);
 
 	test_obj->setMaterial(gold_Phong, gold_Ashikhmin);
+	test_obj->setModel(rotate(mat4(1.f), PI / 18.f, vec3(0, 1, 0)) * scale(mat4(1.f), vec3(2, 2, 2)));
 
 	// Create the ground
 	texShader = LoadShaders("shaders/texture.vert", "shaders/texture.frag");
@@ -207,9 +208,9 @@ void displayCallback(GLFWwindow* window){
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	for(int i = 0; i < 2; i++){
-		glClear(GL_DEPTH_BUFFER_BIT);
+	for(int i = 2; i > 0; i--){
 		glColorMask((i == 1)? GL_TRUE : GL_FALSE, GL_TRUE, (i == 1)? GL_FALSE : GL_TRUE, GL_TRUE);
+		glClear(GL_DEPTH_BUFFER_BIT);
 
 		glUseProgram(texShader);
 		glUniformMatrix4fv(glGetUniformLocation(texShader, "projection"), 1, GL_FALSE, &(projection[0][0]));
