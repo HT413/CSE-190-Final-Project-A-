@@ -22,4 +22,5 @@ void main(){
 	if(useMask != 1){
 		fragColor.w = 0.0;
 	}
+	fragColor.y /= 2.0;
 }

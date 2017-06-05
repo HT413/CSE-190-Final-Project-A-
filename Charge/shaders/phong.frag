@@ -43,6 +43,7 @@ void main(){
 		// Specular component
 		output += (specular * lightCol * pow(max(dot(normal, halfVec), 0.0), shininess));
 	}
+	output.y /= 2.0;
 	if(useMask == 1){
 		fragColor = vec4(output, 1.0);
 	} else{

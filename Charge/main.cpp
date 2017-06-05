@@ -68,7 +68,7 @@ void setup_opengl_settings()
 	glDisable(GL_CULL_FACE);
 	// Allow the alpha channel
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
+	glBlendFunc(GL_ONE, GL_ALPHA);
 	// Set clear color
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 }

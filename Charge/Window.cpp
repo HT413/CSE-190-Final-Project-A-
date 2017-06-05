@@ -168,7 +168,7 @@ void initObjects(){
 	ground->setColor(groundColor);
 	ground->setModel(translate(mat4(1), vec3(0, -2.5f, 0)) 
 		* rotate(mat4(1), PI/2.f, vec3(1, 0, 0))
-		* scale(mat4(1), vec3(10, 10, 1)));
+		* scale(mat4(1), vec3(50, 50, 1)));
 
 	// Misc initializations
 	usingPhong = true;
@@ -209,7 +209,7 @@ void displayCallback(GLFWwindow* window){
 
 	for(int i = 0; i < 2; i++){
 		glClear(GL_DEPTH_BUFFER_BIT);
-		glColorMask((i == 1)? GL_TRUE : GL_FALSE, GL_FALSE, (i == 1)? GL_FALSE : GL_TRUE, GL_TRUE);
+		glColorMask((i == 1)? GL_TRUE : GL_FALSE, GL_TRUE, (i == 1)? GL_FALSE : GL_TRUE, GL_TRUE);
 
 		glUseProgram(texShader);
 		glUniformMatrix4fv(glGetUniformLocation(texShader, "projection"), 1, GL_FALSE, &(projection[0][0]));
@@ -270,7 +270,7 @@ void cursorCallback(GLFWwindow* window, double xpos, double ypos)
 		cam_up = vec3(rotate(mat4(1.0f), angle, vec3(0.0f, 1.0f, 0.0f)) * vec4(cam_up, 1.0f));
 		//Now rotate vertically based on current orientation
 		angle = (float)(ypos - lastY) / 100.0f;
-		vec3 axis = cross((cam_pos_R + cam_pos_L) / 2.f - cam_lookAt, cam_up);
+		vec3 axis = cross(cam_pos_L - cam_lookAt, cam_up);
 		cam_pos_L = vec3(rotate(mat4(1.0f), angle, axis) * vec4(cam_pos_L, 1.0f));
 		cam_pos_R = vec3(rotate(mat4(1.0f), angle, axis) * vec4(cam_pos_R, 1.0f));
 		cam_up = vec3(rotate(mat4(1.0f), angle, axis) * vec4(cam_up, 1.0f));
