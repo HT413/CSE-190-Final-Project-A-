@@ -207,7 +207,7 @@ void displayCallback(GLFWwindow* window){
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	for(int i = 0; i < 1; i++){
+	for(int i = 0; i < 2; i++){
 		glClear(GL_DEPTH_BUFFER_BIT);
 		glColorMask((i == 1)? GL_TRUE : GL_FALSE, GL_FALSE, (i == 1)? GL_FALSE : GL_TRUE, GL_TRUE);
 
@@ -221,7 +221,7 @@ void displayCallback(GLFWwindow* window){
 		glUniform1i(glGetUniformLocation(objShader, "numLights"), numLights);
 		glUniformMatrix4fv(glGetUniformLocation(objShader, "projection"), 1, GL_FALSE, &(projection[0][0]));
 		glUniformMatrix4fv(glGetUniformLocation(objShader, "view"), 1, GL_FALSE, &(((i == 1)? viewL : viewR)[0][0]));
-		glUniform3f(glGetUniformLocation(objShader, "camPos"), cam_pos_L[0], cam_pos_L[1], cam_pos_L[2]);
+		glUniform3f(glGetUniformLocation(objShader, "camPos"), ((i == 1)? cam_pos_L : cam_pos_R)[0], ((i == 1)? cam_pos_L : cam_pos_R)[1], ((i == 1)? cam_pos_L : cam_pos_R)[2]);
 		glUniform4fv(glGetUniformLocation(objShader, "lights"), numLights, lightPositions);
 		glUniform3fv(glGetUniformLocation(objShader, "lightCols"), numLights, lightColors);
 		glUniform1i(glGetUniformLocation(objShader, "useMask"), i);
