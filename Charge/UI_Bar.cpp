@@ -1,6 +1,8 @@
 #include "UI_Bar.h"
 #include "Texture.h"
 
+bool isGameOver = false;
+
 const GLfloat texCoords[12] = {0.f, 1.f, 1.f, 1.f, 1.f, 0.f,
 							   0.f, 1.f, 1.f, 0.f, 0.f, 0.f};
 
@@ -89,7 +91,7 @@ void UI_Bar::draw(GLuint uiShader, GLuint rectShader){
 	glBindVertexArray(0);
 
 	glUseProgram(rectShader);
-	glUniform3f(uColor, .95f, .2f, .4f);
+	glUniform3f(uColor, .95f, .15f, .25f);
 	glBindVertexArray(rectVAO[0]);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
@@ -98,6 +100,45 @@ void UI_Bar::draw(GLuint uiShader, GLuint rectShader){
 		glUniform3f(uColor, .1f, .4f, .95f);
 		glBindVertexArray(rectVAO[1]);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+	}
+}
+
+void UI_Bar::update(float selfHP, float selfNRG, float foeHP){
+	if(selfHP < 0){
+		selfHP = 0;
+		isGameOver = true;
+		cout << "Game over! Opponent wins!" << endl;
+	}
+	if(foeHP < 0){
+		foeHP = 0;
+		isGameOver = true;
+		cout << "Game over! You win!" << endl;
+	}
+	if(isSelfUI){
+		GLfloat hpRect[12] = { 0.f, -.93f , selfHP, -.93f, selfHP, -.87f,
+			                   0.f, -.93f, selfHP, -.87f, 0.f, -.87f};
+
+		glBindVertexArray(rectVAO[0]);
+		glBindBuffer(GL_ARRAY_BUFFER, rectVBO[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(hpRect), hpRect, GL_STATIC_DRAW);
+		glBindVertexArray(0);
+
+		GLfloat nrgRect[12] ={ 0.f, -.99f, selfNRG, -.99f , selfNRG, -.93f,
+			                   0.f, -.99f, selfNRG, -.93f, 0.f, -.93f};
+
+		glBindVertexArray(rectVAO[1]);
+		glBindBuffer(GL_ARRAY_BUFFER, rectVBO[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(nrgRect), nrgRect, GL_STATIC_DRAW);
+		glBindVertexArray(0);
+	}
+	else{
+		GLfloat hpRect[12] ={ 0.f, .92f, foeHP, .92f, foeHP, 1.f,
+							  0.f, .92f, foeHP, 1.f, 0.f, 1.f};
+
+		glBindVertexArray(rectVAO[0]);
+		glBindBuffer(GL_ARRAY_BUFFER, rectVBO[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(hpRect), hpRect, GL_STATIC_DRAW);
 		glBindVertexArray(0);
 	}
 }

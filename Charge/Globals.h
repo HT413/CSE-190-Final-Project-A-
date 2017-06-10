@@ -17,4 +17,7 @@
 using namespace std;
 using namespace glm;
 
+extern int objCount;
+extern bool isGameOver;
+
 #endif

@@ -17,6 +17,7 @@ public:
 	~UI_Bar();
 	void fetchUniforms(GLuint uiShader, GLuint rectShader);
 	void draw(GLuint uiShader, GLuint rectShader);
+	void update(float, float, float);
 };
 
 #endif

@@ -4,6 +4,7 @@
 #include "Plane.h"
 #include "Skybox.h"
 #include "UI_Bar.h"
+#include "Actor.h"
 
 #include <FreeImage.h>
 
@@ -64,11 +65,20 @@ Plane *ground;
 // For the UI
 UI_Bar *selfUI, *foeUI;
 
+// Scene objects
+vector<Actor *> selfActors;
+vector<Actor *> foeActors;
+int objCount = 0;
+
+float selfHP, selfNRG, foeHP;
+
+double lastTime;
+
 // Other variables
 vec3 cam_pos(0, 4, 6.5), cam_lookAt(0, 0, 0) , cam_up(0, 1, 0);
 mat4 projection, view;
 
-OBJObject* test_obj;
+OBJObject* soldierObj, *tankObj, *wallObj, *cannonObj, *castleObj;
 
 const mat4 rShiftMat = translate(mat4(1.f), vec3(0.065, 0, 0));
 
@@ -151,7 +161,11 @@ void initObjects(){
 	srand(rand() % 32768);
 
 	// Create the model
-	test_obj = new OBJObject("objects/castle.obj");
+	soldierObj = new OBJObject("objects/soldier.obj");
+	tankObj = new OBJObject("objects/tank_T72.obj");
+	cannonObj = new OBJObject("objects/cannon.obj");
+	wallObj = new OBJObject("objects/wall.obj");
+	castleObj = new OBJObject("objects/castle.obj");
 
 	// Lights
 	numLights = 2;
@@ -190,8 +204,65 @@ void initObjects(){
 	((RegMaterial*)castle_Sand)->setMaterial(castleAmbient, castleDiffuse, castleSpecular, castleShininess);
 	castle_Sand->getUniformLocs(phongShader);
 
-	test_obj->setMaterial(castle_Sand);
-	test_obj->setModel(translate(mat4(1.f), vec3(0, -.25f, 0)) * scale(mat4(1.f), vec3(1.1f, 1.6f, 1.f)));
+	soldierObj->setMaterial(soldier_Navy);
+	soldierObj->setModel(scale(mat4(1.f), vec3(1.2f, 1.f, 1.f)));
+
+	tankObj->setMaterial(tank_Green);
+	tankObj->setModel(translate(mat4(1.f), vec3(0, -.25f, 0)) * scale(mat4(1.f), vec3(1.1f, 1.6f, 1.f)));
+
+	cannonObj->setMaterial(cannon_Dark);
+	cannonObj->setModel(translate(mat4(1.f), vec3(0, -.25f, 0)) * scale(mat4(1.f), vec3(1.f, 1.2f, 0.9f)) * rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+
+	wallObj->setMaterial(wall_Brown);
+	wallObj->setModel(translate(mat4(1.f), vec3(0, -.1f, 0)) * scale(mat4(1.f), vec3(1.f, 1.f, 4.f)));
+
+	castleObj->setMaterial(castle_Sand);
+	castleObj->setModel(translate(mat4(1.f), vec3(0, 1.3f, -3.f)) * scale(mat4(1.f), vec3(14.f, 5.f, 5.f)));
+
+	// Create towers
+	Actor *a1 = new Tower(castleObj);
+	objCount++;
+	a1->setID(objCount);
+	a1->setPosition(0, 0, 5);
+	a1->toggleActive();
+	a1->togglePlacing();
+	a1->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+	selfActors.push_back(a1);
+
+	Actor *a2 = new Tower(castleObj);
+	objCount++;
+	a2->setID(-objCount);
+	a2->setPosition(0, 0, -5);
+	a2->toggleActive();
+	a2->togglePlacing();
+	foeActors.push_back(a2);
+
+	// Test actors
+	Actor *test = new Soldier(soldierObj);
+	objCount++;
+	test->setID(objCount);
+	test->setPosition(0, 0, 5);
+	test->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+	test->toggleActive();
+	test->togglePlacing();
+	selfActors.push_back(test);
+
+	Actor *test3 = new Soldier(soldierObj);
+	objCount++;
+	test3->setID(objCount);
+	test3->setPosition(0, 0, 5.f);
+	test3->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+	test3->toggleActive();
+	test3->togglePlacing();
+	selfActors.push_back(test3);
+
+	Actor *test2 = new Tank(tankObj);
+	objCount++;
+	test2->setID(-objCount);
+	test2->setPosition(0, 0, -5);
+	test2->toggleActive();
+	test2->togglePlacing();
+	foeActors.push_back(test2);
 
 	// Create the ground
 	texShader = LoadShaders("shaders/texture.vert", "shaders/texture.frag");
@@ -200,7 +271,7 @@ void initObjects(){
 	ground->setColor(groundColor);
 	ground->setModel(translate(mat4(1), vec3(0, -.5f, 0)) 
 		* rotate(mat4(1), PI/2.f, vec3(1, 0, 0))
-		* scale(mat4(1), vec3(14, 10, 1)));
+		* scale(mat4(1), vec3(14, 12, 1)));
 
 	// UI shaders and related components
 	uiShader = LoadShaders("shaders/ui.vert", "shaders/ui.frag");
@@ -212,10 +283,16 @@ void initObjects(){
 
 	// Misc initializations
 	sessionScreenshots = 0;
+	selfNRG = 0.f;
+	lastTime = glfwGetTime();
 }
 
 void destroyObjects(){
-	if(test_obj) delete test_obj;
+	if(soldierObj) delete soldierObj;
+	if(tankObj) delete tankObj;
+	if(cannonObj) delete cannonObj;
+	if(wallObj) delete wallObj;
+	if(castleObj) delete castleObj;
 	if(tank_Green) delete tank_Green;
 	if(wall_Brown) delete wall_Brown;
 	if(soldier_Navy) delete soldier_Navy;
@@ -226,6 +303,8 @@ void destroyObjects(){
 	if(ground) delete ground;
 	if(selfUI) delete selfUI;
 	if(foeUI) delete foeUI;
+	selfActors.clear();
+	foeActors.clear();
 }
 
 void resizeCallback(GLFWwindow* window, int w, int h){
@@ -242,7 +321,20 @@ void resizeCallback(GLFWwindow* window, int w, int h){
 }
 
 void update(){
-
+	if(isGameOver) return;
+	double currTime = glfwGetTime();
+	selfNRG += .045f * (currTime - lastTime);
+	lastTime = currTime;
+	if(selfNRG > 1.f)
+		selfNRG = 1.f;
+	for(Actor *a : selfActors){
+		a->update();
+	}
+	for(Actor *b : foeActors){
+		b->update();
+	}
+	selfUI->update(selfActors[0]->getHealthRatio(), selfNRG, foeActors[0]->getHealthRatio());
+	foeUI->update(selfActors[0]->getHealthRatio(), selfNRG, foeActors[0]->getHealthRatio());
 }
 
 void displayCallback(GLFWwindow* window){
@@ -269,7 +361,10 @@ void displayCallback(GLFWwindow* window){
 		glUniform3fv(glGetUniformLocation(objShader, "lightCols"), numLights, lightColors);
 		glUniform1i(glGetUniformLocation(objShader, "useMask"), i);
 
-		test_obj->draw(objShader);
+		for(Actor *a : selfActors)
+			a->draw(objShader);
+		for(Actor *b : foeActors)
+			b->draw(objShader);
 	}
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
