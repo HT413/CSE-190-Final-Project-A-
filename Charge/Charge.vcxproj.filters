@@ -43,9 +43,6 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="packages.config" />
-    <None Include="shaders\ashikhmin.frag">
-      <Filter>shaders</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Globals.h">

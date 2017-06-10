@@ -17,6 +17,4 @@
 using namespace std;
 using namespace glm;
 
-extern bool usingPhong;
-
 #endif

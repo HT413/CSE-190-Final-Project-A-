@@ -17,7 +17,7 @@ private:
 	GLuint VBO, NBO, VAO, EBO;
 	mat4 model;
 	GLuint shaderProg, uModel;
-	Material *mat, *a_mat;
+	Material *mat;
 
 public:
 	OBJObject(const char* filepath);
@@ -25,7 +25,7 @@ public:
 
 	void parse(const char* filepath);
 	void draw(GLuint shaderProgram);
-	void setMaterial(Material* a, Material* b){ mat = a; a_mat = b; }
+	void setMaterial(Material* a){ mat = a; }
 	void setModel(mat4 m){ model = m; }
 };
 

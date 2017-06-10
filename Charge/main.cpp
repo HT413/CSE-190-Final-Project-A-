@@ -70,7 +70,7 @@ void setup_opengl_settings()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ALPHA);
 	// Set clear color
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 }
 
 void print_versions()
@@ -88,7 +88,7 @@ void print_versions()
 int main(void)
 {
 	// Create the GLFW window
-	window = createWindow(1024, 768);
+	window = createWindow(1366, 768);
 	// Print OpenGL and GLSL versions
 	print_versions();
 	// Setup callbacks
