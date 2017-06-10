@@ -15,7 +15,7 @@ private:
 	vector<vec3> vertices;
 	vector<vec3> normals;
 	GLuint VBO, NBO, VAO, EBO;
-	mat4 model;
+	mat4 model, parentModel;
 	GLuint shaderProg, uModel;
 	Material *mat;
 
@@ -27,6 +27,7 @@ public:
 	void draw(GLuint shaderProgram);
 	void setMaterial(Material* a){ mat = a; }
 	void setModel(mat4 m){ model = m; }
+	void setParentModel(mat4 m){ parentModel = m; }
 };
 
 #endif

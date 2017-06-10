@@ -139,8 +139,15 @@
     <None Include="shaders\skybox.vert" />
     <None Include="shaders\texture.frag" />
     <None Include="shaders\texture.vert" />
+    <None Include="shaders\ui.frag" />
+    <None Include="shaders\ui.vert" />
+    <None Include="shaders\ui_rect.frag" />
+    <None Include="shaders\ui_rect.vert" />
+    <None Include="textures\P2_HP.ppm" />
+    <None Include="textures\P2_UI.ppm" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Actor.h" />
     <ClInclude Include="ClientGame.h" />
     <ClInclude Include="ClientNetwork.h" />
     <ClInclude Include="Globals.h" />
@@ -155,9 +162,11 @@
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="UI_Bar.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Actor.cpp" />
     <ClCompile Include="ClientGame.cpp" />
     <ClCompile Include="ClientNetwork.cpp" />
     <ClCompile Include="main.cpp" />
@@ -169,6 +178,7 @@
     <ClCompile Include="ServerNetwork.cpp" />
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="UI_Bar.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

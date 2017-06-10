@@ -108,7 +108,7 @@ void OBJObject::parse(const char * filepath) {
 
 void OBJObject::draw(GLuint shaderProgram) {
 	mat->bindMaterial();
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &(model[0][0]));
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &((parentModel * model)[0][0]));
 
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);

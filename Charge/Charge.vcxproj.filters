@@ -16,6 +16,9 @@
     <Filter Include="shaders">
       <UniqueIdentifier>{c8cced7d-c7e7-4576-8d1b-1b9b0989c8c3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="textures">
+      <UniqueIdentifier>{3f0b03b3-0ae2-4287-a6d5-f891563afd74}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\basic.vert">
@@ -43,6 +46,24 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="textures\P2_HP.ppm">
+      <Filter>textures</Filter>
+    </None>
+    <None Include="textures\P2_UI.ppm">
+      <Filter>textures</Filter>
+    </None>
+    <None Include="shaders\ui.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\ui.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\ui_rect.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\ui_rect.frag">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Globals.h">
@@ -90,6 +111,12 @@
     <ClInclude Include="ClientGame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UI_Bar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -126,6 +153,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ClientGame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UI_Bar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
