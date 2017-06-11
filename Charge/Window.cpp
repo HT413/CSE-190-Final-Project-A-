@@ -3,6 +3,8 @@
 #include "OBJObject.h"
 #include "Plane.h"
 #include "Skybox.h"
+#include "UI_Bar.h"
+#include "Actor.h"
 
 #include <FreeImage.h>
 
@@ -16,8 +18,8 @@ enum trackballAction { NO_ACTION, C_ROTATE };
 trackballAction mouseAction;
 
 // For shader programs
-bool usingPhong;
-GLuint phongShader, ashikhminShader, objShader, texShader;
+GLuint phongShader, objShader, texShader;
+GLuint uiShader, uiRectShader;
 
 // Light properties
 const int MAX_LIGHTS = 8;
@@ -26,28 +28,60 @@ float *lightPositions;
 float *lightColors;
 
 // Material properties
-Material *gold_Phong, *gold_Ashikhmin;
-vec3 goldAmbient = vec3(.24725f, .1995f, .0745f);
-vec3 goldDiffuse_p = vec3(.75164f, .60648f, .22648f);
-vec3 goldSpecular_p = vec3(.628281f, .555802f, .366065f);
-float goldShininess = 100.f;
+Material *tank_Green;
+vec3 tankAmbient = vec3(.04f, .27f, .19f);
+vec3 tankDiffuse = vec3(.22f, .83f, .44f);
+vec3 tankSpecular = vec3(.19f, .76f, .40f);
+float tankShininess = 5.f;
 
-vec3 goldDiffuse_a = vec3(.5f, .37f, .15f);
-vec3 goldSpecular_a = vec3(1.f, .75f, .3f);
-float goldRd = .1f;
-float goldRs = .9f;
-float goldnu = 5.f;
-float goldnv = 10.f;
+Material *wall_Brown;
+vec3 wallAmbient = vec3(.24f, .19f, .02f);
+vec3 wallDiffuse = vec3(.79f, .33f, .05f);
+vec3 wallSpecular = vec3(.64f, .36f, .04f);
+float wallShininess = 1.f;
+
+Material *soldier_Navy;
+vec3 soldierAmbient = vec3(.02f, .19f, .26f);
+vec3 soldierDiffuse = vec3(.16f, .51f, .85f);
+vec3 soldierSpecular = vec3(.11f, .20f, .80f);
+float soldierShininess = 3.f;
+
+Material *cannon_Dark;
+vec3 cannonAmbient = vec3(.095f, .065f, .025f);
+vec3 cannonDiffuse = vec3(.44f, .36f, .19f);
+vec3 cannonSpecular = vec3(.75f, .72f, .35f);
+float cannonShininess = 15.f;
+
+Material *castle_Sand;
+vec3 castleAmbient = vec3(.19f, .24f, .03f);
+vec3 castleDiffuse = vec3(.67f, .84f, .15f);
+vec3 castleSpecular = vec3(.75f, .90f, .20f);
+float castleShininess = 3.f;
 
 // For the ground
 vec3 groundColor = vec3(.6f, .6f, .6f);
 Plane *ground;
 
-// Other variables
-vec3 cam_pos_L(-0.3, 0, 7), cam_pos_R(0.3, 0, 7), cam_lookAt(0, 0, 0) , cam_up(0, 1, 0);
-mat4 projection, viewL, viewR;
+// For the UI
+UI_Bar *selfUI, *foeUI;
 
-OBJObject* test_obj;
+// Scene objects
+vector<Actor *> selfActors;
+vector<Actor *> foeActors;
+int objCount = 0;
+
+float selfHP, selfNRG, foeHP;
+
+double lastTime;
+
+// Other variables
+vec3 cam_pos(0, 4, 6.5), cam_lookAt(0, 0, 0) , cam_up(0, 1, 0);
+mat4 projection, view;
+bool gameStart;
+
+OBJObject* soldierObj, *tankObj, *wallObj, *cannonObj, *castleObj;
+
+const mat4 rShiftMat = translate(mat4(1.f), vec3(0.065, 0, 0));
 
 // Helper func generates random string; len = number of characters, appends ".jpg" to end
 void gen_random(char *s, const int len) {
@@ -128,7 +162,11 @@ void initObjects(){
 	srand(rand() % 32768);
 
 	// Create the model
-	test_obj = new OBJObject("objects/tank_T72.obj");
+	soldierObj = new OBJObject("objects/soldier.obj");
+	tankObj = new OBJObject("objects/tank_T72.obj");
+	cannonObj = new OBJObject("objects/cannon.obj");
+	wallObj = new OBJObject("objects/wall.obj");
+	castleObj = new OBJObject("objects/castle.obj");
 
 	// Lights
 	numLights = 2;
@@ -145,44 +183,130 @@ void initObjects(){
 
 	// Initialize shaders
 	objShader = phongShader = LoadShaders("shaders/basic.vert", "shaders/phong.frag");
-	ashikhminShader = LoadShaders("shaders/basic.vert", "shaders/ashikhmin.frag");
 	// Phong shading and the regular materials
 	glUseProgram(phongShader);
-	gold_Phong = new RegMaterial();
-	((RegMaterial*)gold_Phong)->setMaterial(goldAmbient, goldDiffuse_p, goldSpecular_p, goldShininess);
-	gold_Phong->getUniformLocs(phongShader);
+	tank_Green = new RegMaterial();
+	((RegMaterial*)tank_Green)->setMaterial(tankAmbient, tankDiffuse, tankSpecular, tankShininess);
+	tank_Green->getUniformLocs(phongShader);
 
-	// Ashikhmin BRDF and the ashikhmin material
-	glUseProgram(ashikhminShader);
-	gold_Ashikhmin = new AshikhminMaterial();
-	((AshikhminMaterial*)gold_Ashikhmin)->setMaterial(goldDiffuse_a, goldSpecular_a, goldRd, goldRs);
-	((AshikhminMaterial*)gold_Ashikhmin)->setRoughness(goldnu, goldnv);
-	gold_Ashikhmin->getUniformLocs(ashikhminShader);
+	wall_Brown = new RegMaterial();
+	((RegMaterial*)wall_Brown)->setMaterial(wallAmbient, wallDiffuse, wallSpecular, wallShininess);
+	wall_Brown->getUniformLocs(phongShader);
 
-	test_obj->setMaterial(gold_Phong, gold_Ashikhmin);
-	test_obj->setModel(rotate(mat4(1.f), PI / 18.f, vec3(0, 1, 0)) * scale(mat4(1.f), vec3(2, 2, 2)));
+	soldier_Navy = new RegMaterial();
+	((RegMaterial*)soldier_Navy)->setMaterial(soldierAmbient, soldierDiffuse, soldierSpecular, soldierShininess);
+	soldier_Navy->getUniformLocs(phongShader);
+
+	cannon_Dark = new RegMaterial();
+	((RegMaterial*)cannon_Dark)->setMaterial(cannonAmbient, cannonDiffuse, cannonSpecular, cannonShininess);
+	cannon_Dark->getUniformLocs(phongShader);
+
+	castle_Sand = new RegMaterial();
+	((RegMaterial*)castle_Sand)->setMaterial(castleAmbient, castleDiffuse, castleSpecular, castleShininess);
+	castle_Sand->getUniformLocs(phongShader);
+
+	soldierObj->setMaterial(soldier_Navy);
+	soldierObj->setModel(scale(mat4(1.f), vec3(1.2f, 1.f, 1.f)));
+
+	tankObj->setMaterial(tank_Green);
+	tankObj->setModel(translate(mat4(1.f), vec3(0, -.25f, 0)) * scale(mat4(1.f), vec3(1.1f, 1.6f, 1.f)));
+
+	cannonObj->setMaterial(cannon_Dark);
+	cannonObj->setModel(translate(mat4(1.f), vec3(0, -.25f, 0)) * scale(mat4(1.f), vec3(1.f, 1.2f, 0.9f)) * rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+
+	wallObj->setMaterial(wall_Brown);
+	wallObj->setModel(translate(mat4(1.f), vec3(0, -.1f, 0)) * scale(mat4(1.f), vec3(1.f, 1.f, 4.f)));
+
+	castleObj->setMaterial(castle_Sand);
+	castleObj->setModel(translate(mat4(1.f), vec3(0, 1.3f, -3.f)) * scale(mat4(1.f), vec3(14.f, 5.f, 5.f)));
+
+	// Create towers
+	Actor *a1 = new Tower(castleObj);
+	objCount++;
+	a1->setID(objCount);
+	a1->setPosition(0, 0, 5);
+	a1->toggleActive();
+	a1->togglePlacing();
+	a1->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+	selfActors.push_back(a1);
+
+	Actor *a2 = new Tower(castleObj);
+	objCount++;
+	a2->setID(-objCount);
+	a2->setPosition(0, 0, -5);
+	a2->toggleActive();
+	a2->togglePlacing();
+	foeActors.push_back(a2);
+
+	// Test actors
+	Actor *test = new Soldier(soldierObj);
+	objCount++;
+	test->setID(objCount);
+	test->setPosition(0, 0, 5);
+	test->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+	test->toggleActive();
+	test->togglePlacing();
+	selfActors.push_back(test);
+
+	Actor *test3 = new Soldier(soldierObj);
+	objCount++;
+	test3->setID(objCount);
+	test3->setPosition(0, 0, 5.f);
+	test3->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+	test3->toggleActive();
+	test3->togglePlacing();
+	selfActors.push_back(test3);
+
+	Actor *test2 = new Tank(tankObj);
+	objCount++;
+	test2->setID(-objCount);
+	test2->setPosition(0, 0, -5);
+	test2->toggleActive();
+	test2->togglePlacing();
+	foeActors.push_back(test2);
 
 	// Create the ground
 	texShader = LoadShaders("shaders/texture.vert", "shaders/texture.frag");
 	glUseProgram(texShader);
 	ground = new Plane(texShader);
 	ground->setColor(groundColor);
-	ground->setModel(translate(mat4(1), vec3(0, -2.5f, 0)) 
+	ground->setModel(translate(mat4(1), vec3(0, -.5f, 0)) 
 		* rotate(mat4(1), PI/2.f, vec3(1, 0, 0))
-		* scale(mat4(1), vec3(50, 50, 1)));
+		* scale(mat4(1), vec3(14, 12, 1)));
+
+	// UI shaders and related components
+	uiShader = LoadShaders("shaders/ui.vert", "shaders/ui.frag");
+	uiRectShader = LoadShaders("shaders/ui_rect.vert", "shaders/ui_rect.frag");
+	selfUI = new UI_Bar(true);
+	foeUI = new UI_Bar(false);
+	selfUI->fetchUniforms(uiShader, uiRectShader);
+	foeUI->fetchUniforms(uiShader, uiRectShader);
 
 	// Misc initializations
-	usingPhong = true;
 	sessionScreenshots = 0;
+	selfNRG = 0.f;
+	lastTime = glfwGetTime();
+	gameStart = false;
 }
 
 void destroyObjects(){
-	if(test_obj) delete test_obj;
-	if(gold_Phong) delete gold_Phong;
-	if(gold_Ashikhmin) delete gold_Ashikhmin;
+	if(soldierObj) delete soldierObj;
+	if(tankObj) delete tankObj;
+	if(cannonObj) delete cannonObj;
+	if(wallObj) delete wallObj;
+	if(castleObj) delete castleObj;
+	if(tank_Green) delete tank_Green;
+	if(wall_Brown) delete wall_Brown;
+	if(soldier_Navy) delete soldier_Navy;
+	if(cannon_Dark) delete cannon_Dark;
+	if(castle_Sand) delete castle_Sand;
 	if(lightPositions) delete[] lightPositions;
 	if(lightColors) delete[] lightColors;
 	if(ground) delete ground;
+	if(selfUI) delete selfUI;
+	if(foeUI) delete foeUI;
+	selfActors.clear();
+	foeActors.clear();
 }
 
 void resizeCallback(GLFWwindow* window, int w, int h){
@@ -194,13 +318,27 @@ void resizeCallback(GLFWwindow* window, int w, int h){
 	if(height > 0)
 	{
 		projection = perspective(PI / 2.f, (float)width / (float)height, 0.1f, 1000.0f);
-		viewL = lookAt(cam_pos_L, cam_lookAt, cam_up);
-		viewR = lookAt(cam_pos_R, cam_lookAt, cam_up);
+		view = lookAt(cam_pos, cam_lookAt, cam_up);
 	}
 }
 
 void update(){
-
+	if(gameStart){
+		if(isGameOver) return;
+		double currTime = glfwGetTime();
+		selfNRG += .045f * (currTime - lastTime);
+		lastTime = currTime;
+		if(selfNRG > 1.f)
+			selfNRG = 1.f;
+		for(Actor *a : selfActors){
+			a->update();
+		}
+		for(Actor *b : foeActors){
+			b->update();
+		}
+		selfUI->update(selfActors[0]->getHealthRatio(), selfNRG, foeActors[0]->getHealthRatio());
+		foeUI->update(selfActors[0]->getHealthRatio(), selfNRG, foeActors[0]->getHealthRatio());
+	}
 }
 
 void displayCallback(GLFWwindow* window){
@@ -214,21 +352,28 @@ void displayCallback(GLFWwindow* window){
 
 		glUseProgram(texShader);
 		glUniformMatrix4fv(glGetUniformLocation(texShader, "projection"), 1, GL_FALSE, &(projection[0][0]));
-		glUniformMatrix4fv(glGetUniformLocation(texShader, "view"), 1, GL_FALSE, &(((i == 1)? viewL : viewR)[0][0]));
+		glUniformMatrix4fv(glGetUniformLocation(texShader, "view"), 1, GL_FALSE, &(((i == 1)? view : view * rShiftMat)[0][0]));
 		glUniform1i(glGetUniformLocation(texShader, "useMask"), i);
 		ground->draw();
 
 		glUseProgram(objShader);
 		glUniform1i(glGetUniformLocation(objShader, "numLights"), numLights);
 		glUniformMatrix4fv(glGetUniformLocation(objShader, "projection"), 1, GL_FALSE, &(projection[0][0]));
-		glUniformMatrix4fv(glGetUniformLocation(objShader, "view"), 1, GL_FALSE, &(((i == 1)? viewL : viewR)[0][0]));
-		glUniform3f(glGetUniformLocation(objShader, "camPos"), ((i == 1)? cam_pos_L : cam_pos_R)[0], ((i == 1)? cam_pos_L : cam_pos_R)[1], ((i == 1)? cam_pos_L : cam_pos_R)[2]);
+		glUniformMatrix4fv(glGetUniformLocation(objShader, "view"), 1, GL_FALSE, &(((i == 1)? view : view * rShiftMat)[0][0]));
+		glUniform3f(glGetUniformLocation(objShader, "camPos"), ((i == 1)? cam_pos : cam_pos)[0], ((i == 1)? cam_pos : cam_pos)[1], ((i == 1)? cam_pos : cam_pos)[2]);
 		glUniform4fv(glGetUniformLocation(objShader, "lights"), numLights, lightPositions);
 		glUniform3fv(glGetUniformLocation(objShader, "lightCols"), numLights, lightColors);
 		glUniform1i(glGetUniformLocation(objShader, "useMask"), i);
 
-		test_obj->draw(objShader);
+		for(Actor *a : selfActors)
+			a->draw(objShader);
+		for(Actor *b : foeActors)
+			b->draw(objShader);
 	}
+
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	selfUI->draw(uiShader, uiRectShader);
+	foeUI->draw(uiShader, uiRectShader);
 	glfwSwapBuffers(window);
 
 	glfwPollEvents();
@@ -242,12 +387,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		// Take a screenshot of the application
 		case GLFW_KEY_P:
 			saveScreenshot();
-			break;
-
-		// Toggle between phong shading and ashikhmin shading on pressing "i"
-		case GLFW_KEY_I:
-			usingPhong = !usingPhong;
-			objShader = (usingPhong)? phongShader : ashikhminShader;
 			break;
 
 		// Kill the program on pressing Esc
@@ -266,18 +405,15 @@ void cursorCallback(GLFWwindow* window, double xpos, double ypos)
 		float angle;
 		// Perform horizontal (y-axis) rotation
 		angle = (float)(lastX - xpos) / 100.0f;
-		cam_pos_L = vec3(rotate(mat4(1.0f), angle, vec3(0.0f, 1.0f, 0.0f)) * vec4(cam_pos_L, 1.0f));
-		cam_pos_R = vec3(rotate(mat4(1.0f), angle, vec3(0.0f, 1.0f, 0.0f)) * vec4(cam_pos_R, 1.0f));
+		cam_pos = vec3(rotate(mat4(1.0f), angle, vec3(0.0f, 1.0f, 0.0f)) * vec4(cam_pos, 1.0f));
 		cam_up = vec3(rotate(mat4(1.0f), angle, vec3(0.0f, 1.0f, 0.0f)) * vec4(cam_up, 1.0f));
 		//Now rotate vertically based on current orientation
 		angle = (float)(ypos - lastY) / 100.0f;
-		vec3 axis = cross(cam_pos_L - cam_lookAt, cam_up);
-		cam_pos_L = vec3(rotate(mat4(1.0f), angle, axis) * vec4(cam_pos_L, 1.0f));
-		cam_pos_R = vec3(rotate(mat4(1.0f), angle, axis) * vec4(cam_pos_R, 1.0f));
+		vec3 axis = cross(cam_pos - cam_lookAt, cam_up);
+		cam_pos = vec3(rotate(mat4(1.0f), angle, axis) * vec4(cam_pos, 1.0f));
 		cam_up = vec3(rotate(mat4(1.0f), angle, axis) * vec4(cam_up, 1.0f));
 		// Now update the camera
-		viewL = lookAt(cam_pos_L, cam_lookAt, cam_up);
-		viewR = lookAt(cam_pos_R, cam_lookAt, cam_up);
+		view = lookAt(cam_pos, cam_lookAt, cam_up);
 		lastX = xpos;
 		lastY = ypos;
 	}
@@ -297,8 +433,6 @@ void mouseCallback(GLFWwindow* window, int button, int action, int mods)
 
 // Scroll wheel callback func
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset){
-	cam_pos_L *= (yOffset > 0)? .99f : 1.01f;
-	cam_pos_R *= (yOffset > 0)? .99f : 1.01f;
-	viewL = lookAt(cam_pos_L, cam_lookAt, cam_up);
-	viewR = lookAt(cam_pos_R, cam_lookAt, cam_up);
+	cam_pos *= (yOffset > 0)? .99f : 1.01f;
+	view = lookAt(cam_pos, cam_lookAt, cam_up);
 }

@@ -1,13 +1,10 @@
 #include "main.h"
 #include "Window.h"
-#include "ServerGame.h"
-#include "ClientGame.h"
-#include <process.h>
-
-GLFWwindow* window;
 
 ServerGame * server;
 ClientGame * client;
+
+GLFWwindow* window;
 
 void serverLoop(void *);
 void clientLoop();
@@ -20,8 +17,10 @@ void serverLoop(void * arg)
 
 void clientLoop()
 {
-	while(true){}
+	while(true)
+		client->update();
 }
+
 void error_callback(int error, const char* description)
 {
 	// Print error
@@ -70,7 +69,7 @@ void setup_opengl_settings()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ALPHA);
 	// Set clear color
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 }
 
 void print_versions()
@@ -119,8 +118,8 @@ int main(void)
 	glfwTerminate();
 
 	// Kill the server and client
-	delete server;
-	delete client;
+	if(server) delete server;
+	if(client) delete client;
 
 	exit(EXIT_SUCCESS);
 }

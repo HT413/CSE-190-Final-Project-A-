@@ -17,6 +17,15 @@
 using namespace std;
 using namespace glm;
 
-extern bool usingPhong;
+extern int objCount;
+extern bool isGameOver;
+extern bool gameStart;
+
+#include "ServerGame.h"
+#include "ClientGame.h"
+#include <process.h>
+
+extern ServerGame * server;
+extern ClientGame * client;
 
 #endif

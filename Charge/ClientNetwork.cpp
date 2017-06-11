@@ -22,8 +22,6 @@ ClientNetwork::ClientNetwork()
 		exit(1);
 	}
 
-
-
 	// set address info
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
@@ -31,7 +29,7 @@ ClientNetwork::ClientNetwork()
 	hints.ai_protocol = IPPROTO_TCP;  //TCP connection!!!
 
 	//resolve server address and port 
-	iResult = getaddrinfo("127.0.0.1", DEFAULT_PORT, &hints, &result);
+	iResult = getaddrinfo(SERVER_IP, DEFAULT_PORT, &hints, &result);
 
 	if(iResult != 0)
 	{
