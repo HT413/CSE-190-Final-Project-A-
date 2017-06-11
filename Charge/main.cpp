@@ -100,7 +100,7 @@ int main(void)
 	// Initialize game server and client
 	//server = new ServerGame();
 	//_beginthread(serverLoop, 0, (void*)12);
-	client = new ClientGame();
+	//client = new ClientGame();
 
 	// Loop while GLFW window should stay open
 	while(!glfwWindowShouldClose(window))

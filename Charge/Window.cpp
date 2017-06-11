@@ -79,8 +79,12 @@ vec3 cam_pos(0, 4, 6.5), cam_lookAt(0, 0, 0) , cam_up(0, 1, 0);
 mat4 projection, view;
 bool gameStart;
 double lastUpdateTime;
+bool wasPickup;
+vec3 handPos = vec3(0, 0, 4.5);
 
+// OBJ models
 OBJObject* soldierObj, *tankObj, *wallObj, *cannonObj, *castleObj;
+Actor* pickedUp;
 
 const mat4 rShiftMat = translate(mat4(1.f), vec3(0.065, 0, 0));
 
@@ -239,33 +243,6 @@ void initObjects(){
 	a2->togglePlacing();
 	foeActors.push_back(a2);
 
-	// Test actors
-	Actor *test = new Soldier(soldierObj);
-	objCount++;
-	test->setID(objCount);
-	test->setPosition(0, 0, 5);
-	test->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
-	test->toggleActive();
-	test->togglePlacing();
-	selfActors.push_back(test);
-
-	Actor *test3 = new Soldier(soldierObj);
-	objCount++;
-	test3->setID(objCount);
-	test3->setPosition(0, 0, 5.f);
-	test3->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
-	test3->toggleActive();
-	test3->togglePlacing();
-	selfActors.push_back(test3);
-
-	Actor *test2 = new Tank(tankObj);
-	objCount++;
-	test2->setID(-objCount);
-	test2->setPosition(0, 0, -5);
-	test2->toggleActive();
-	test2->togglePlacing();
-	foeActors.push_back(test2);
-
 	// Create the ground
 	texShader = LoadShaders("shaders/texture.vert", "shaders/texture.frag");
 	glUseProgram(texShader);
@@ -287,7 +264,7 @@ void initObjects(){
 	sessionScreenshots = 0;
 	selfNRG = 0.f;
 	lastUpdateTime = lastTime = glfwGetTime();
-	gameStart = false;
+	gameStart = true;
 }
 
 void destroyObjects(){
@@ -328,12 +305,14 @@ void update(){
 	if(!gameStart) lastTime = currTime;
 	if(currTime - lastUpdateTime > 0.04){
 		//server->update();
-		client->update();
+		//client->update();
 		lastUpdateTime = currTime;
 	}
 
 	if(gameStart){
 		if(isGameOver) return;
+		if(pickedUp)
+			pickedUp->setPosition(handPos.x, handPos.y, handPos.z);
 		selfNRG += .045f * (currTime - lastTime);
 		lastTime = currTime;
 		if(selfNRG > 1.f)
@@ -400,6 +379,239 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		// Kill the program on pressing Esc
 		case GLFW_KEY_ESCAPE:
 			glfwSetWindowShouldClose(window, GL_TRUE);
+			break;
+
+		// Determine pickup or drop for keys 1-5
+		case GLFW_KEY_1:
+			if(pickedUp) {
+				if(pickedUp->getType() == a_Soldier || wasPickup) {
+					pickedUp->setPosition(handPos.x, 0, handPos.z);
+					pickedUp->togglePlacing();
+					pickedUp->toggleActive();
+					pickedUp = 0;
+					wasPickup = false;
+				}
+				else {
+					size_t actorsSize = selfActors.size();
+					switch(selfActors[actorsSize - 1]->getType()){
+					case a_Soldier: selfNRG += .15f; break;
+					case a_Tank: selfNRG += .45f; break;
+					case a_Wall: selfNRG += .6f; break;
+					case a_Cannon: selfNRG += .5f; break;
+					}
+					selfActors.erase(selfActors.begin() + actorsSize - 1);
+					objCount--;
+					pickedUp = 0;
+					if(selfNRG >= .15f){
+						selfNRG -= .15f;
+						pickedUp = new Soldier(soldierObj);
+						objCount++;
+						pickedUp->setID(objCount);
+						pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+						selfActors.push_back(pickedUp);
+					}
+					else{
+						cout << "Not enough energy! Cost is 15. You have " << (selfNRG * 100) << endl;
+					}
+				}
+			}
+			else {
+				if(selfNRG >= .15f){
+					selfNRG -= .15f;
+					pickedUp = new Soldier(soldierObj);
+					objCount++;
+					pickedUp->setID(objCount);
+					pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+					selfActors.push_back(pickedUp);
+				}
+				else{
+					cout << "Not enough energy! Cost is 15. You have " << (selfNRG * 100) << endl;
+				}
+			}
+			break;
+
+		case GLFW_KEY_2:
+			if(pickedUp) {
+				if(pickedUp->getType() == a_Tank || wasPickup) {
+					pickedUp->setPosition(handPos.x, 0, handPos.z);
+					pickedUp->togglePlacing();
+					pickedUp->toggleActive();
+					pickedUp = 0;
+					wasPickup = false;
+				}
+				else {
+					size_t actorsSize = selfActors.size();
+					switch(selfActors[actorsSize - 1]->getType()){
+					case a_Soldier: selfNRG += .15f; break;
+					case a_Tank: selfNRG += .45f; break;
+					case a_Wall: selfNRG += .6f; break;
+					case a_Cannon: selfNRG += .5f; break;
+					}
+					selfActors.erase(selfActors.begin() + actorsSize - 1);
+					objCount--;
+					pickedUp = 0;
+					if(selfNRG >= .45f){
+						selfNRG -= .45f;
+						pickedUp = new Tank(tankObj);
+						objCount++;
+						pickedUp->setID(objCount);
+						pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+						selfActors.push_back(pickedUp);
+					}
+					else{
+						cout << "Not enough energy! Cost is 45. You have " << (selfNRG * 100) << endl;
+					}
+				}
+			}
+			else {
+				if(selfNRG >= .45f){
+					selfNRG -= .45f;
+					pickedUp = new Tank(tankObj);
+					objCount++;
+					pickedUp->setID(objCount);
+					pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+					selfActors.push_back(pickedUp);
+				}
+				else{
+					cout << "Not enough energy! Cost is 45. You have " << (selfNRG * 100) << endl;
+				}
+			}
+			break;
+
+		case GLFW_KEY_3:
+			if(pickedUp) {
+				if(pickedUp->getType() == a_Wall || wasPickup) {
+					pickedUp->setPosition(handPos.x, 0, handPos.z);
+					pickedUp->togglePlacing();
+					pickedUp->toggleActive();
+					pickedUp = 0;
+					wasPickup = false;
+				}
+				else {
+					size_t actorsSize = selfActors.size();
+					switch(selfActors[actorsSize - 1]->getType()){
+					case a_Soldier: selfNRG += .15f; break;
+					case a_Tank: selfNRG += .45f; break;
+					case a_Wall: selfNRG += .6f; break;
+					case a_Cannon: selfNRG += .5f; break;
+					}
+					selfActors.erase(selfActors.begin() + actorsSize - 1);
+					objCount--;
+					pickedUp = 0;
+					if(selfNRG >= .6f){
+						selfNRG -= .6f;
+						pickedUp = new Wall(wallObj);
+						objCount++;
+						pickedUp->setID(objCount);
+						pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+						selfActors.push_back(pickedUp);
+					}
+					else{
+						cout << "Not enough energy! Cost is 60. You have " << (selfNRG * 100) << endl;
+					}
+				}
+			}
+			else {
+				if(selfNRG >= .6f){
+					selfNRG -= .6f;
+					pickedUp = new Wall(wallObj);
+					objCount++;
+					pickedUp->setID(objCount);
+					pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+					selfActors.push_back(pickedUp);
+				}
+				else{
+					cout << "Not enough energy! Cost is 60. You have " << (selfNRG * 100) << endl;
+				}
+			}
+			break;
+
+		case GLFW_KEY_4:
+			if(pickedUp) {
+				if(pickedUp->getType() == a_Cannon || wasPickup) {
+					pickedUp->setPosition(handPos.x, 0, handPos.z);
+					pickedUp->togglePlacing();
+					pickedUp->toggleActive();
+					pickedUp = 0;
+					wasPickup = false;
+				}
+				else {
+					size_t actorsSize = selfActors.size();
+					switch(selfActors[actorsSize - 1]->getType()){
+					case a_Soldier: selfNRG += .15f; break;
+					case a_Tank: selfNRG += .45f; break;
+					case a_Wall: selfNRG += .6f; break;
+					case a_Cannon: selfNRG += .5f; break;
+					}
+					selfActors.erase(selfActors.begin() + actorsSize - 1);
+					objCount--;
+					pickedUp = 0;
+					if(selfNRG >= .5f){
+						selfNRG -= .5f;
+						pickedUp = new Cannon(cannonObj);
+						objCount++;
+						pickedUp->setID(objCount);
+						pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+						selfActors.push_back(pickedUp);
+					}
+					else{
+						cout << "Not enough energy! Cost is 50. You have " << (selfNRG * 100) << endl;
+					}
+				}
+			}
+			else {
+				if(selfNRG >= .5f){
+					selfNRG -= .5f;
+					pickedUp = new Cannon(cannonObj);
+					objCount++;
+					pickedUp->setID(objCount);
+					pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+					selfActors.push_back(pickedUp);
+				}
+				else{
+					cout << "Not enough energy! Cost is 50. You have " << (selfNRG * 100) << endl;
+				}
+			}
+			break;
+
+		case GLFW_KEY_5:
+			if(pickedUp) {
+				pickedUp->setPosition(handPos.x, 0, handPos.z);
+				pickedUp->togglePlacing();
+				pickedUp->toggleActive();
+				pickedUp = 0;
+				wasPickup = false;
+			}
+			// No actor picked up, check if we selected one instead
+			else {
+				if(selfNRG >= .25f){
+					for(Actor *a : selfActors) {
+						if(a->getType() == a_Tower) continue;
+						if(length(a->getPosition() - handPos) < .5f) {
+							pickedUp = a;
+							break;
+						}
+					}
+					if(!pickedUp) {
+						for(Actor *a : foeActors) {
+							if(a->getType() == a_Tower) continue;
+							if(length(a->getPosition() - handPos) < .5f) {
+								pickedUp = a;
+								break;
+							}
+						}
+					}
+					if(pickedUp) {
+						selfNRG -= .25f;
+						pickedUp->toggleActive();
+						pickedUp->togglePlacing();
+						wasPickup = true;
+					}
+				}
+				else{
+					cout << "Not enough energy! Cost is 25. You have " << (selfNRG * 100) << endl;
+				}
+			}
 			break;
 		}
 	}
