@@ -15,6 +15,8 @@ ServerGame::~ServerGame()
 {
 }
 
+bool notStarted = true;
+
 void ServerGame::update()
 {
 	// get new clients
@@ -22,10 +24,11 @@ void ServerGame::update()
 	{
 		printf("client %d has been connected to the server\n", client_id);
 		client_id++;
-		// Inform the clients that the game should now start
-		if(client_id == 2){
-			notifyStart();
-		}
+	}
+	// Inform the clients that the game should now start
+	if(notStarted && client_id == 2){
+		notifyStart();
+		notStarted = false;
 	}
 
 	receiveFromClients();
@@ -58,7 +61,7 @@ void ServerGame::receiveFromClients()
 				break;
 
 			case ACTION_EVENT:
-				printf("server received action event packet from client\n");
+				//printf("server received action event packet from client\n");
 				sendActionPackets();
 				break;
 

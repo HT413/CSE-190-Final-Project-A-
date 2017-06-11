@@ -53,6 +53,7 @@ void ClientGame::update()
 
 		switch(packet.packet_type) {
 		case GAME_START_NOTICE:
+			gameStart = !gameStart;
 			printf("Opponent found! Game now starting!\n");
 			break;
 

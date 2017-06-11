@@ -78,6 +78,7 @@ double lastTime;
 vec3 cam_pos(0, 4, 6.5), cam_lookAt(0, 0, 0) , cam_up(0, 1, 0);
 mat4 projection, view;
 bool gameStart;
+double lastUpdateTime;
 
 OBJObject* soldierObj, *tankObj, *wallObj, *cannonObj, *castleObj;
 
@@ -285,7 +286,7 @@ void initObjects(){
 	// Misc initializations
 	sessionScreenshots = 0;
 	selfNRG = 0.f;
-	lastTime = glfwGetTime();
+	lastUpdateTime = lastTime = glfwGetTime();
 	gameStart = false;
 }
 
@@ -323,9 +324,16 @@ void resizeCallback(GLFWwindow* window, int w, int h){
 }
 
 void update(){
+	double currTime = glfwGetTime();
+	if(!gameStart) lastTime = currTime;
+	if(currTime - lastUpdateTime > 0.04){
+		//server->update();
+		client->update();
+		lastUpdateTime = currTime;
+	}
+
 	if(gameStart){
 		if(isGameOver) return;
-		double currTime = glfwGetTime();
 		selfNRG += .045f * (currTime - lastTime);
 		lastTime = currTime;
 		if(selfNRG > 1.f)

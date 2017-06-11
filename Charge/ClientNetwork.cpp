@@ -35,6 +35,7 @@ ClientNetwork::ClientNetwork()
 	{
 		printf("getaddrinfo failed with error: %d\n", iResult);
 		WSACleanup();
+		getchar();
 		exit(1);
 	}
 
@@ -48,6 +49,7 @@ ClientNetwork::ClientNetwork()
 		if(ConnectSocket == INVALID_SOCKET) {
 			printf("socket failed with error: %ld\n", WSAGetLastError());
 			WSACleanup();
+			getchar();
 			exit(1);
 		}
 
@@ -56,6 +58,7 @@ ClientNetwork::ClientNetwork()
 
 		if(iResult == SOCKET_ERROR)
 		{
+			printf("Connection failed with error: %ld\n", WSAGetLastError());
 			closesocket(ConnectSocket);
 			ConnectSocket = INVALID_SOCKET;
 			printf("The server is down... did not connect");
@@ -70,6 +73,7 @@ ClientNetwork::ClientNetwork()
 	{
 		printf("Unable to connect to server!\n");
 		WSACleanup();
+		getchar();
 		exit(1);
 	}
 
@@ -82,6 +86,7 @@ ClientNetwork::ClientNetwork()
 		printf("ioctlsocket failed with error: %d\n", WSAGetLastError());
 		closesocket(ConnectSocket);
 		WSACleanup();
+		getchar();
 		exit(1);
 	}
 
@@ -99,6 +104,7 @@ int ClientNetwork::receivePackets(char * recvbuf)
 		printf("Connection closed\n");
 		closesocket(ConnectSocket);
 		WSACleanup();
+		getchar();
 		exit(1);
 	}
 
