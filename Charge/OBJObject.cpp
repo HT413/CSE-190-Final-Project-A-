@@ -95,7 +95,7 @@ void OBJObject::parse(const char * filepath) {
 	float avgX = (maxX + minX) / 2.0f;
 	float avgY = (maxY + minY) / 2.0f;
 	float avgZ = (maxZ + minZ) / 2.0f;
-	float maxDimension = std::max((maxX - minX), std::max((maxY - minY), (maxZ - minZ)));
+	float maxDimension = max((maxX - minX), max((maxY - minY), (maxZ - minZ)));
 
 	// Loop through list of vertices and replace with the adjusted vertices
 	for (int i = 0; i < vertices.size(); ++i) {

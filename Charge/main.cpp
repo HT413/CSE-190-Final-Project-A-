@@ -1,13 +1,10 @@
 #include "main.h"
 #include "Window.h"
-#include "ServerGame.h"
-#include "ClientGame.h"
-#include <process.h>
-
-GLFWwindow* window;
 
 ServerGame * server;
 ClientGame * client;
+
+GLFWwindow* window;
 
 void serverLoop(void *);
 void clientLoop();
@@ -20,8 +17,10 @@ void serverLoop(void * arg)
 
 void clientLoop()
 {
-	while(true){}
+	while(true)
+		client->update();
 }
+
 void error_callback(int error, const char* description)
 {
 	// Print error
@@ -119,8 +118,8 @@ int main(void)
 	glfwTerminate();
 
 	// Kill the server and client
-	delete server;
-	delete client;
+	if(server) delete server;
+	if(client) delete client;
 
 	exit(EXIT_SUCCESS);
 }

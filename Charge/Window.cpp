@@ -77,6 +77,7 @@ double lastTime;
 // Other variables
 vec3 cam_pos(0, 4, 6.5), cam_lookAt(0, 0, 0) , cam_up(0, 1, 0);
 mat4 projection, view;
+bool gameStart;
 
 OBJObject* soldierObj, *tankObj, *wallObj, *cannonObj, *castleObj;
 
@@ -285,6 +286,7 @@ void initObjects(){
 	sessionScreenshots = 0;
 	selfNRG = 0.f;
 	lastTime = glfwGetTime();
+	gameStart = false;
 }
 
 void destroyObjects(){
@@ -321,20 +323,22 @@ void resizeCallback(GLFWwindow* window, int w, int h){
 }
 
 void update(){
-	if(isGameOver) return;
-	double currTime = glfwGetTime();
-	selfNRG += .045f * (currTime - lastTime);
-	lastTime = currTime;
-	if(selfNRG > 1.f)
-		selfNRG = 1.f;
-	for(Actor *a : selfActors){
-		a->update();
+	if(gameStart){
+		if(isGameOver) return;
+		double currTime = glfwGetTime();
+		selfNRG += .045f * (currTime - lastTime);
+		lastTime = currTime;
+		if(selfNRG > 1.f)
+			selfNRG = 1.f;
+		for(Actor *a : selfActors){
+			a->update();
+		}
+		for(Actor *b : foeActors){
+			b->update();
+		}
+		selfUI->update(selfActors[0]->getHealthRatio(), selfNRG, foeActors[0]->getHealthRatio());
+		foeUI->update(selfActors[0]->getHealthRatio(), selfNRG, foeActors[0]->getHealthRatio());
 	}
-	for(Actor *b : foeActors){
-		b->update();
-	}
-	selfUI->update(selfActors[0]->getHealthRatio(), selfNRG, foeActors[0]->getHealthRatio());
-	foeUI->update(selfActors[0]->getHealthRatio(), selfNRG, foeActors[0]->getHealthRatio());
 }
 
 void displayCallback(GLFWwindow* window){

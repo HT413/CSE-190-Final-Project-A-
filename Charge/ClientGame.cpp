@@ -1,11 +1,11 @@
 #include "ClientGame.h"
+#include "Globals.h"
 
 
 ClientGame::ClientGame()
 {
 	network = new ClientNetwork();
-
-	// send init packet
+	// Send init packet
 	const unsigned int packet_size = sizeof(Packet);
 	char packet_data[packet_size];
 
@@ -13,7 +13,6 @@ ClientGame::ClientGame()
 	packet.packet_type = INIT_CONNECTION;
 
 	packet.serialize(packet_data);
-
 	NetworkService::sendMessage(network->ConnectSocket, packet_data, packet_size);
 }
 
@@ -32,7 +31,6 @@ void ClientGame::sendActionPackets()
 	packet.packet_type = ACTION_EVENT;
 
 	packet.serialize(packet_data);
-
 	NetworkService::sendMessage(network->ConnectSocket, packet_data, packet_size);
 }
 
@@ -54,19 +52,17 @@ void ClientGame::update()
 		i += sizeof(Packet);
 
 		switch(packet.packet_type) {
+		case GAME_START_NOTICE:
+			printf("Opponent found! Game now starting!\n");
+			break;
 
 		case ACTION_EVENT:
-
-			printf("client received action event packet from server\n");
-
+			printf("Server ping was successful!\n");
 			sendActionPackets();
-
 			break;
 
 		default:
-
-			printf("error in packet types\n");
-
+			printf("Error in packet types\n");
 			break;
 		}
 	}

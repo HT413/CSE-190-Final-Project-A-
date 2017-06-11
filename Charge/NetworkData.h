@@ -6,11 +6,9 @@
 #define MAX_PACKET_SIZE 1000000
 
 enum PacketTypes {
-
 	INIT_CONNECTION = 0,
-
 	ACTION_EVENT = 1,
-
+	GAME_START_NOTICE = 2
 };
 
 struct Packet {
