@@ -2,6 +2,7 @@
 #define _GRAPHICS_WINDOW_H
 
 #include "main.h"
+extern enum ACTOR_TYPE;
 
 void initObjects();
 void destroyObjects();
@@ -13,5 +14,8 @@ void keyCallback(GLFWwindow*, int, int, int, int);
 void cursorCallback(GLFWwindow*, double, double);
 void mouseCallback(GLFWwindow*, int, int, int);
 void scrollCallback(GLFWwindow*, double, double);
+void setLeapHand(vec3);
+void setRiftHand(vec3);
+void createNewUnit(ACTOR_TYPE, int);
 
 #endif

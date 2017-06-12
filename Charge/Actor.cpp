@@ -75,10 +75,10 @@ Tower::Tower(OBJObject* o): Actor(o){
 
 void Soldier::move(){
 	// Check if should move
-	if(!isActive) return;
+	double currTime = glfwGetTime();
+	if(!isActive) lastTime = currTime;
 	Actor *collideAgainst = 0;
 	if(shouldMove){
-		double currTime = glfwGetTime();
 		position.z += ((id > 0)? -1.8f : 1.8f) * (currTime - lastTime);
 		lastTime = currTime;
 		// Check which opponent (if any) are in this unit's hit range
@@ -161,10 +161,10 @@ void Soldier::doAction(){
 
 void Tank::move(){
 	// Check if should move
-	if(!isActive) return;
+	double currTime = glfwGetTime();
+	if(!isActive) lastTime = currTime;
 	Actor *collideAgainst = 0;
 	if(shouldMove){
-		double currTime = glfwGetTime();
 		position.z += ((id > 0)? -1.2f : 1.2f) * (currTime - lastTime);
 		lastTime = currTime;
 		// Check which opponent (if any) are in this unit's hit range
@@ -247,10 +247,10 @@ void Tank::doAction(){
 
 void Cannon::move(){
 	// Check if should move
-	if(!isActive) return;
+	double currTime = glfwGetTime();
+	if(!isActive) lastTime = currTime;
 	Actor *collideAgainst = 0;
 	if(shouldMove){
-		double currTime = glfwGetTime();
 		position.z += ((id > 0)? -.6f : .6f) * (currTime - lastTime);
 		lastTime = currTime;
 		// Check which opponent (if any) are in this unit's hit range

@@ -12,7 +12,8 @@ enum PacketTypes {
 	RIFT_HAND_LOC = 3,
 	RIFT_HEAD_LOC = 4,
 	LEAP_HAND_LOC = 5,
-	UNIT_CREATION = 6
+	RIFT_UNIT_CREATION = 6,
+	LEAP_UNIT_CREATION = 7
 };
 
 struct Packet {

@@ -84,6 +84,27 @@ void print_versions()
 #endif
 }
 
+class SampleListener: public Listener {
+public:
+	virtual void onConnect(const Controller&);
+	virtual void onFrame(const Controller&);
+};
+
+void SampleListener::onConnect(const Controller& controller) {
+	std::cout << "Leap Motion connected" << std::endl;
+}
+
+void SampleListener::onFrame(const Controller& controller) {
+	const Frame frame = controller.frame();
+	Leap::HandList hands = frame.hands();
+	if(hands.count() > 0){
+		Leap::Hand firstHand = hands[0];
+		Vector handPos = firstHand.palmPosition();
+		vec3 leapHand = vec3(handPos.x / 20.f, (handPos.y - 200) / 20.f, 3.f + handPos.z / 20.f);
+		setLeapHand(leapHand);
+	}
+}
+
 int main(void)
 {
 	// Create the GLFW window
@@ -100,7 +121,11 @@ int main(void)
 	// Initialize game server and client
 	//server = new ServerGame();
 	//_beginthread(serverLoop, 0, (void*)12);
-	//client = new ClientGame();
+	client = new ClientGame();
+
+	Controller controller;
+	SampleListener listener;
+	controller.addListener(listener);
 
 	// Loop while GLFW window should stay open
 	while(!glfwWindowShouldClose(window))

@@ -5,6 +5,9 @@
 #include "Skybox.h"
 #include "UI_Bar.h"
 #include "Actor.h"
+#include "Sphere.h"
+
+#include <Leap.h>
 
 #include <FreeImage.h>
 
@@ -58,6 +61,17 @@ vec3 castleDiffuse = vec3(.67f, .84f, .15f);
 vec3 castleSpecular = vec3(.75f, .90f, .20f);
 float castleShininess = 3.f;
 
+Material *sphere_Green;
+vec3 sphereAmbient = vec3(.05f, .29f, .08f);
+vec3 sphereDiffuse = vec3(.14f, .93f, .22f);
+vec3 sphereSpecular = vec3(.10f, .96f, .15f);
+float sphereShininess = 3.f;
+
+Material *sphere_Blue;
+vec3 spherebAmbient = vec3(.05f, .08f, .29f);
+vec3 spherebDiffuse = vec3(.14f, .22f, .93f);
+vec3 spherebSpecular = vec3(.10f, .15f, .96f);
+
 // For the ground
 vec3 groundColor = vec3(.6f, .6f, .6f);
 Plane *ground;
@@ -80,13 +94,16 @@ mat4 projection, view;
 bool gameStart;
 double lastUpdateTime;
 bool wasPickup;
-vec3 handPos = vec3(0, 0, 4.5);
+vec3 handPos = vec3(0.01, 0.01, 4.5);
 
 // OBJ models
 OBJObject* soldierObj, *tankObj, *wallObj, *cannonObj, *castleObj;
 Actor* pickedUp;
+Sphere *handSphere, *riftSphere;
+vec3 riftHandPos = vec3(0, -1, 0);
 
 const mat4 rShiftMat = translate(mat4(1.f), vec3(0.065, 0, 0));
+
 
 // Helper func generates random string; len = number of characters, appends ".jpg" to end
 void gen_random(char *s, const int len) {
@@ -210,6 +227,14 @@ void initObjects(){
 	((RegMaterial*)castle_Sand)->setMaterial(castleAmbient, castleDiffuse, castleSpecular, castleShininess);
 	castle_Sand->getUniformLocs(phongShader);
 
+	sphere_Green = new RegMaterial();
+	((RegMaterial*)sphere_Green)->setMaterial(sphereAmbient, sphereDiffuse, sphereSpecular, sphereShininess);
+	sphere_Green->getUniformLocs(phongShader);
+
+	sphere_Blue = new RegMaterial();
+	((RegMaterial*)sphere_Blue)->setMaterial(spherebAmbient, spherebDiffuse, spherebSpecular, sphereShininess);
+	sphere_Blue->getUniformLocs(phongShader);
+
 	soldierObj->setMaterial(soldier_Navy);
 	soldierObj->setModel(scale(mat4(1.f), vec3(1.2f, 1.f, 1.f)));
 
@@ -217,7 +242,7 @@ void initObjects(){
 	tankObj->setModel(translate(mat4(1.f), vec3(0, -.25f, 0)) * scale(mat4(1.f), vec3(1.1f, 1.6f, 1.f)));
 
 	cannonObj->setMaterial(cannon_Dark);
-	cannonObj->setModel(translate(mat4(1.f), vec3(0, -.25f, 0)) * scale(mat4(1.f), vec3(1.f, 1.2f, 0.9f)) * rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+	cannonObj->setModel(translate(mat4(1.f), vec3(0, -.25f, 0)) * scale(mat4(1.f), vec3(1.f, 1.2f, 0.9f)) * rotate(mat4(1.f), M_PI, vec3(0, 1, 0)));
 
 	wallObj->setMaterial(wall_Brown);
 	wallObj->setModel(translate(mat4(1.f), vec3(0, -.1f, 0)) * scale(mat4(1.f), vec3(1.f, 1.f, 4.f)));
@@ -232,7 +257,7 @@ void initObjects(){
 	a1->setPosition(0, 0, 5);
 	a1->toggleActive();
 	a1->togglePlacing();
-	a1->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+	a1->setModel(rotate(mat4(1.f), M_PI, vec3(0, 1, 0)));
 	selfActors.push_back(a1);
 
 	Actor *a2 = new Tower(castleObj);
@@ -249,7 +274,7 @@ void initObjects(){
 	ground = new Plane(texShader);
 	ground->setColor(groundColor);
 	ground->setModel(translate(mat4(1), vec3(0, -.5f, 0)) 
-		* rotate(mat4(1), PI/2.f, vec3(1, 0, 0))
+		* rotate(mat4(1), M_PI/2.f, vec3(1, 0, 0))
 		* scale(mat4(1), vec3(14, 12, 1)));
 
 	// UI shaders and related components
@@ -260,11 +285,18 @@ void initObjects(){
 	selfUI->fetchUniforms(uiShader, uiRectShader);
 	foeUI->fetchUniforms(uiShader, uiRectShader);
 
+	// The hand sphere
+	glUseProgram(phongShader);
+	handSphere = new Sphere(20, 20);
+	handSphere->setMaterial(sphere_Green);
+	riftSphere = new Sphere(20, 20);
+	riftSphere->setMaterial(sphere_Blue);
+
 	// Misc initializations
 	sessionScreenshots = 0;
 	selfNRG = 0.f;
 	lastUpdateTime = lastTime = glfwGetTime();
-	gameStart = true;
+	gameStart = false;
 }
 
 void destroyObjects(){
@@ -278,6 +310,10 @@ void destroyObjects(){
 	if(soldier_Navy) delete soldier_Navy;
 	if(cannon_Dark) delete cannon_Dark;
 	if(castle_Sand) delete castle_Sand;
+	if(sphere_Green) delete sphere_Green;
+	if(sphere_Blue) delete sphere_Blue;
+	if(handSphere) delete handSphere;
+	if(riftSphere) delete riftSphere;
 	if(lightPositions) delete[] lightPositions;
 	if(lightColors) delete[] lightColors;
 	if(ground) delete ground;
@@ -285,6 +321,56 @@ void destroyObjects(){
 	if(foeUI) delete foeUI;
 	selfActors.clear();
 	foeActors.clear();
+}
+
+void setRiftHand(vec3 v){
+	if(length(v) < .01f) return;
+	riftHandPos = v;
+}
+
+void createNewUnit(ACTOR_TYPE type, int id){
+	switch(type){
+	case a_Soldier:
+	{
+		Actor* actor = new Soldier(soldierObj);
+		actor->setID(id);
+		actor->setPosition(riftHandPos.x, 0, riftHandPos.z);
+		actor->toggleActive();
+		actor->togglePlacing();
+		foeActors.push_back(actor);
+		break;
+	}
+	case a_Tank:
+	{
+		Actor* actor = new Tank(tankObj);
+		actor->setID(id);
+		actor->setPosition(riftHandPos.x, 0, riftHandPos.z);
+		actor->toggleActive();
+		actor->togglePlacing();
+		foeActors.push_back(actor);
+		break;
+	}
+	case a_Cannon:
+	{
+		Actor* actor = new Cannon(cannonObj);
+		actor->setID(id);
+		actor->setPosition(riftHandPos.x, 0, riftHandPos.z);
+		actor->toggleActive();
+		actor->togglePlacing();
+		foeActors.push_back(actor);
+		break;
+	}
+	case a_Wall:
+	{
+		Actor* actor = new Wall(wallObj);
+		actor->setID(id);
+		actor->setPosition(riftHandPos.x, 0, riftHandPos.z);
+		actor->toggleActive();
+		actor->togglePlacing();
+		foeActors.push_back(actor);
+		break;
+	}
+	}
 }
 
 void resizeCallback(GLFWwindow* window, int w, int h){
@@ -295,22 +381,27 @@ void resizeCallback(GLFWwindow* window, int w, int h){
 
 	if(height > 0)
 	{
-		projection = perspective(PI / 2.f, (float)width / (float)height, 0.1f, 1000.0f);
+		projection = perspective(M_PI / 2.f, (float)width / (float)height, 0.1f, 1000.0f);
 		view = lookAt(cam_pos, cam_lookAt, cam_up);
 	}
+}
+
+void setLeapHand(vec3 pos){
+	handPos = pos;
 }
 
 void update(){
 	double currTime = glfwGetTime();
 	if(!gameStart) lastTime = currTime;
 	if(currTime - lastUpdateTime > 0.04){
-		//server->update();
 		if(client) client->sendHandPos(handPos.x, handPos.y, handPos.z);
 		if(client) client->update();
 		lastUpdateTime = currTime;
 	}
 
 	if(gameStart){
+		handSphere->setModel(translate(mat4(1.f), handPos) * scale(mat4(1.f), vec3(.2f, .2f, .2f)));
+		riftSphere->setModel(translate(mat4(1.f), riftHandPos) * scale(mat4(1.f), vec3(.2f, .2f, .2f)));
 		if(isGameOver) return;
 		if(pickedUp)
 			pickedUp->setPosition(handPos.x, handPos.y, handPos.z);
@@ -357,6 +448,8 @@ void displayCallback(GLFWwindow* window){
 			a->draw(objShader);
 		for(Actor *b : foeActors)
 			b->draw(objShader);
+		handSphere->draw(objShader);
+		riftSphere->draw(objShader);
 	}
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -389,8 +482,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp->setPosition(handPos.x, 0, handPos.z);
 					pickedUp->togglePlacing();
 					pickedUp->toggleActive();
-					if(client && !wasPickup)
-						client->sendUnitCreation(a_Soldier, pickedUp->getID());
+					if(client && !wasPickup){
+						client->sendUnitCreation(.1f, pickedUp->getID() + .1f);
+					}
 					pickedUp = 0;
 					wasPickup = false;
 				}
@@ -410,7 +504,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 						pickedUp = new Soldier(soldierObj);
 						objCount++;
 						pickedUp->setID(objCount);
-						pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+						pickedUp->setModel(rotate(mat4(1.f), M_PI, vec3(0, 1, 0)));
 						selfActors.push_back(pickedUp);
 					}
 					else{
@@ -424,7 +518,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp = new Soldier(soldierObj);
 					objCount++;
 					pickedUp->setID(objCount);
-					pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+					pickedUp->setModel(rotate(mat4(1.f), M_PI, vec3(0, 1, 0)));
 					selfActors.push_back(pickedUp);
 				}
 				else{
@@ -439,8 +533,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp->setPosition(handPos.x, 0, handPos.z);
 					pickedUp->togglePlacing();
 					pickedUp->toggleActive();
-					if(client && !wasPickup)
-						client->sendUnitCreation(a_Soldier, pickedUp->getID());
+					if(client && !wasPickup){
+						client->sendUnitCreation(1.1f, pickedUp->getID() + .1f);
+					}
 					pickedUp = 0;
 					wasPickup = false;
 				}
@@ -460,7 +555,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 						pickedUp = new Tank(tankObj);
 						objCount++;
 						pickedUp->setID(objCount);
-						pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+						pickedUp->setModel(rotate(mat4(1.f), M_PI, vec3(0, 1, 0)));
 						selfActors.push_back(pickedUp);
 					}
 					else{
@@ -474,7 +569,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp = new Tank(tankObj);
 					objCount++;
 					pickedUp->setID(objCount);
-					pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+					pickedUp->setModel(rotate(mat4(1.f), M_PI, vec3(0, 1, 0)));
 					selfActors.push_back(pickedUp);
 				}
 				else{
@@ -489,8 +584,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp->setPosition(handPos.x, 0, handPos.z);
 					pickedUp->togglePlacing();
 					pickedUp->toggleActive();
-					if(client && !wasPickup)
-						client->sendUnitCreation(a_Soldier, pickedUp->getID());
+					if(client && !wasPickup){
+						client->sendUnitCreation(2.1f, pickedUp->getID() + .1f);
+					}
 					pickedUp = 0;
 					wasPickup = false;
 				}
@@ -510,7 +606,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 						pickedUp = new Wall(wallObj);
 						objCount++;
 						pickedUp->setID(objCount);
-						pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+						pickedUp->setModel(rotate(mat4(1.f), M_PI, vec3(0, 1, 0)));
 						selfActors.push_back(pickedUp);
 					}
 					else{
@@ -524,7 +620,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp = new Wall(wallObj);
 					objCount++;
 					pickedUp->setID(objCount);
-					pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+					pickedUp->setModel(rotate(mat4(1.f), M_PI, vec3(0, 1, 0)));
 					selfActors.push_back(pickedUp);
 				}
 				else{
@@ -539,8 +635,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp->setPosition(handPos.x, 0, handPos.z);
 					pickedUp->togglePlacing();
 					pickedUp->toggleActive();
-					if(client && !wasPickup)
-						client->sendUnitCreation(a_Soldier, pickedUp->getID());
+					if(client && !wasPickup){
+						client->sendUnitCreation(3.1f, pickedUp->getID() + .1f);
+					}
 					pickedUp = 0;
 					wasPickup = false;
 				}
@@ -560,7 +657,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 						pickedUp = new Cannon(cannonObj);
 						objCount++;
 						pickedUp->setID(objCount);
-						pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+						pickedUp->setModel(rotate(mat4(1.f), M_PI, vec3(0, 1, 0)));
 						selfActors.push_back(pickedUp);
 					}
 					else{
@@ -574,7 +671,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp = new Cannon(cannonObj);
 					objCount++;
 					pickedUp->setID(objCount);
-					pickedUp->setModel(rotate(mat4(1.f), PI, vec3(0, 1, 0)));
+					pickedUp->setModel(rotate(mat4(1.f), M_PI, vec3(0, 1, 0)));
 					selfActors.push_back(pickedUp);
 				}
 				else{

@@ -18,7 +18,7 @@ public:
 
 	void sendActionPackets();
 	void sendHandPos(float, float, float);
-	void sendUnitCreation(ACTOR_TYPE, int);
+	void sendUnitCreation(float, float);
 
 	char network_data[MAX_PACKET_SIZE];
 
