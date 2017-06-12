@@ -6,9 +6,31 @@
 
 enum ACTOR_TYPE{ a_Soldier, a_Tank, a_Wall, a_Cannon, a_Tower };
 
+const GLfloat cubeVerts[] ={
+	// Front
+	-.5f, .5f, .5f, -.5f, -.5f, .5f, .5f, -.5f, .5f,
+	.5f, -.5f, .5f, .5f, .5f, .5f, -.5f, .5f, .5f,
+	// Left
+	-.5f, .5f, -.5f, -.5f, -.5f, -.5f, -.5f, -.5f, .5f,
+	-.5f, -.5f, .5f, -.5f, .5f, .5f, -.5f, .5f, -.5f,
+	// Back
+	.5f, .5f, -.5f, .5f, -.5f, -.5f, -.5f, -.5f, -.5f,
+	-.5f, -.5f, -.5f, -.5f, .5f, -.5f, .5f, .5f, -.5f,
+	// Right
+	.5f, .5f, .5f, .5f, -.5f, .5f, .5f, -.5f, -.5f,
+	.5f, -.5f, -.5f, .5f, .5f, -.5f, .5f, .5f, .5f,
+	// Top
+	-.5f, .5f, -.5f, -.5f, .5f, .5f, .5f, .5f, .5f,
+	.5f, .5f, .5f, .5f, .5f, -.5f, -.5f, .5f, -.5f,
+	// Bottom
+	-.5f, -.5f, .5f, -.5f, -.5f, -.5f, .5f, -.5f, -.5f,
+	.5f, -.5f, -.5f, .5f, -.5f, .5f, -.5f, -.5f, .5f
+};
+
 class Actor
 {
 protected:
+	GLuint VAO, VBO;
 	int id;
 	vec3 position;
 	mat4 translation, rotation = mat4(1.f);
@@ -23,9 +45,11 @@ protected:
 
 public:
 	Actor(OBJObject*);
+	~Actor();
 
 	void update();
 	void draw(GLuint);
+	void drawHP(GLuint);
 	void setActionTime(double t){ actionTime = t; }
 	void setID(int i){ id = i; }
 	int getID(){ return id; }

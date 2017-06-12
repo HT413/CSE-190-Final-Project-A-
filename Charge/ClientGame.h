@@ -19,6 +19,8 @@ public:
 	void sendActionPackets();
 	void sendHandPos(float, float, float);
 	void sendUnitCreation(float, float);
+	void sendUnitPickup(float);
+	void sendUnitPlaced();
 
 	char network_data[MAX_PACKET_SIZE];
 

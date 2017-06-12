@@ -22,7 +22,7 @@ trackballAction mouseAction;
 
 // For shader programs
 GLuint phongShader, objShader, texShader;
-GLuint uiShader, uiRectShader;
+GLuint uiShader, uiRectShader, unitHPShader;
 
 // Light properties
 const int MAX_LIGHTS = 8;
@@ -72,6 +72,11 @@ vec3 spherebAmbient = vec3(.05f, .08f, .29f);
 vec3 spherebDiffuse = vec3(.14f, .22f, .93f);
 vec3 spherebSpecular = vec3(.10f, .15f, .96f);
 
+Material *sphere_Red;
+vec3 sphererAmbient = vec3(.29f, .08f, .05f);
+vec3 sphererDiffuse = vec3(.93f, .22f, .14f);
+vec3 sphererSpecular = vec3(.96f, .15f, .10f);
+
 // For the ground
 vec3 groundColor = vec3(.6f, .6f, .6f);
 Plane *ground;
@@ -95,12 +100,14 @@ bool gameStart;
 double lastUpdateTime;
 bool wasPickup;
 vec3 handPos = vec3(0.01, 0.01, 4.5);
+int objPickup;
 
 // OBJ models
 OBJObject* soldierObj, *tankObj, *wallObj, *cannonObj, *castleObj;
 Actor* pickedUp;
-Sphere *handSphere, *riftSphere;
+Sphere *handSphere, *riftHandObject, *riftHeadObject;
 vec3 riftHandPos = vec3(0, -1, 0);
+vec3 riftHeadPos = vec3(0, -1, 0);
 
 const mat4 rShiftMat = translate(mat4(1.f), vec3(0.065, 0, 0));
 
@@ -235,6 +242,10 @@ void initObjects(){
 	((RegMaterial*)sphere_Blue)->setMaterial(spherebAmbient, spherebDiffuse, spherebSpecular, sphereShininess);
 	sphere_Blue->getUniformLocs(phongShader);
 
+	sphere_Red = new RegMaterial();
+	((RegMaterial*)sphere_Red)->setMaterial(sphererAmbient, sphererDiffuse, sphererSpecular, sphereShininess);
+	sphere_Red->getUniformLocs(phongShader);
+
 	soldierObj->setMaterial(soldier_Navy);
 	soldierObj->setModel(scale(mat4(1.f), vec3(1.2f, 1.f, 1.f)));
 
@@ -285,18 +296,48 @@ void initObjects(){
 	selfUI->fetchUniforms(uiShader, uiRectShader);
 	foeUI->fetchUniforms(uiShader, uiRectShader);
 
-	// The hand sphere
+	// Shaders for the unit HP bars
+	unitHPShader = LoadShaders("shaders/unithp.vert", "shaders/unithp.frag");
+
+	// The hand spheres
 	glUseProgram(phongShader);
 	handSphere = new Sphere(20, 20);
 	handSphere->setMaterial(sphere_Green);
-	riftSphere = new Sphere(20, 20);
-	riftSphere->setMaterial(sphere_Blue);
+	riftHandObject = new Sphere(20, 20);
+	riftHandObject->setMaterial(sphere_Blue);
+	riftHeadObject = new Sphere(20, 20);
+	riftHeadObject->setMaterial(sphere_Red);
 
 	// Misc initializations
 	sessionScreenshots = 0;
 	selfNRG = 0.f;
 	lastUpdateTime = lastTime = glfwGetTime();
 	gameStart = false;
+	objPickup = 0;
+}
+
+void unitPickup(int id) {
+	objPickup = id;
+	if(id > 0) {
+		selfActors[id - 2]->toggleActive();
+		selfActors[id - 2]->togglePlacing();
+	}
+	else {
+		foeActors[-2 - id]->toggleActive();
+		foeActors[-2 - id]->togglePlacing();
+	}
+}
+
+void unitPlacedown() {
+	if(objPickup > 0) {
+		selfActors[objPickup - 2]->toggleActive();
+		selfActors[objPickup - 2]->togglePlacing();
+	}
+	else {
+		foeActors[-2 - objPickup]->toggleActive();
+		foeActors[-2 - objPickup]->togglePlacing();
+	}
+	objPickup = 0;
 }
 
 void destroyObjects(){
@@ -312,8 +353,10 @@ void destroyObjects(){
 	if(castle_Sand) delete castle_Sand;
 	if(sphere_Green) delete sphere_Green;
 	if(sphere_Blue) delete sphere_Blue;
+	if(sphere_Red) delete sphere_Red;
 	if(handSphere) delete handSphere;
-	if(riftSphere) delete riftSphere;
+	if(riftHandObject) delete riftHandObject;
+	if(riftHeadObject) delete riftHeadObject;
 	if(lightPositions) delete[] lightPositions;
 	if(lightColors) delete[] lightColors;
 	if(ground) delete ground;
@@ -326,6 +369,11 @@ void destroyObjects(){
 void setRiftHand(vec3 v){
 	if(length(v) < .01f) return;
 	riftHandPos = v;
+}
+
+void setRiftHead(vec3 v){
+	if(length(v) < .01f) return;
+	riftHeadPos = v;
 }
 
 void createNewUnit(ACTOR_TYPE type, int id){
@@ -401,10 +449,17 @@ void update(){
 
 	if(gameStart){
 		handSphere->setModel(translate(mat4(1.f), handPos) * scale(mat4(1.f), vec3(.2f, .2f, .2f)));
-		riftSphere->setModel(translate(mat4(1.f), riftHandPos) * scale(mat4(1.f), vec3(.2f, .2f, .2f)));
+		riftHandObject->setModel(translate(mat4(1.f), riftHandPos) * scale(mat4(1.f), vec3(.2f, .2f, .2f)));
+		riftHeadObject->setModel(translate(mat4(1.f), riftHeadPos) * scale(mat4(1.f), vec3(.4f, .4f, .4f)));
 		if(isGameOver) return;
 		if(pickedUp)
 			pickedUp->setPosition(handPos.x, handPos.y, handPos.z);
+		if(objPickup > 0) {
+			selfActors[objPickup - 2]->setPosition(riftHandPos.x, riftHandPos.y, riftHandPos.z);
+		}
+		else if(objPickup < 0){
+			foeActors[-2 - objPickup]->setPosition(riftHandPos.x, riftHandPos.y, riftHandPos.z);
+		}
 		selfNRG += .045f * (currTime - lastTime);
 		lastTime = currTime;
 		if(selfNRG > 1.f)
@@ -449,7 +504,16 @@ void displayCallback(GLFWwindow* window){
 		for(Actor *b : foeActors)
 			b->draw(objShader);
 		handSphere->draw(objShader);
-		riftSphere->draw(objShader);
+		riftHandObject->draw(objShader);
+		riftHeadObject->draw(objShader);
+
+		glUseProgram(unitHPShader);
+		glUniformMatrix4fv(glGetUniformLocation(unitHPShader, "projection"), 1, GL_FALSE, &(projection[0][0]));
+		glUniformMatrix4fv(glGetUniformLocation(unitHPShader, "view"), 1, GL_FALSE, &(((i == 1)? view : view * rShiftMat)[0][0]));
+		for(Actor *a : selfActors)
+			a->drawHP(unitHPShader);
+		for(Actor *b : foeActors)
+			b->drawHP(unitHPShader);
 	}
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -686,6 +750,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 				pickedUp->togglePlacing();
 				pickedUp->toggleActive();
 				pickedUp = 0;
+				client->sendUnitPlaced();
 				wasPickup = false;
 			}
 			// No actor picked up, check if we selected one instead
@@ -711,6 +776,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 						selfNRG -= .25f;
 						pickedUp->toggleActive();
 						pickedUp->togglePlacing();
+						float theID;
+						if(pickedUp->getID() > 0)
+							theID = pickedUp->getID() + .1f;
+						else
+							theID = pickedUp->getID() - .1f;
+						client->sendUnitPickup(theID);
 						wasPickup = true;
 					}
 				}

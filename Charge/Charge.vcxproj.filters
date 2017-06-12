@@ -64,6 +64,12 @@
     <None Include="shaders\ui_rect.frag">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\unithp.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\unithp.frag">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Globals.h">

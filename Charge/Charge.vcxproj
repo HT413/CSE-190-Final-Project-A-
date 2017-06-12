@@ -147,6 +147,8 @@
     <None Include="shaders\ui.vert" />
     <None Include="shaders\ui_rect.frag" />
     <None Include="shaders\ui_rect.vert" />
+    <None Include="shaders\unithp.frag" />
+    <None Include="shaders\unithp.vert" />
     <None Include="textures\P2_HP.ppm" />
     <None Include="textures\P2_UI.ppm" />
   </ItemGroup>

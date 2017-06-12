@@ -16,6 +16,9 @@ void mouseCallback(GLFWwindow*, int, int, int);
 void scrollCallback(GLFWwindow*, double, double);
 void setLeapHand(vec3);
 void setRiftHand(vec3);
+void setRiftHead(vec3);
 void createNewUnit(ACTOR_TYPE, int);
+void unitPickup(int);
+void unitPlacedown();
 
 #endif

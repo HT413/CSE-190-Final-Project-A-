@@ -14,7 +14,7 @@
 // port to connect sockets through 
 #define DEFAULT_PORT "6881"
 // IP address of server
-#define SERVER_IP "128.54.70.64"
+#define SERVER_IP "128.54.70.57"
 // Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")

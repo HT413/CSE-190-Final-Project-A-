@@ -7,7 +7,27 @@ Actor::Actor(OBJObject* obj)
 	isActive = false;
 	isPlacing = true;
 	shouldMove = false;
+
+	// Generate a VAO and VBO for the unit HP bars
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVerts), cubeVerts, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
+
+	glBindVertexArray(0);
 }
+
+
+Actor::~Actor() {
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+}
+
 
 void Actor::update(){
 	double currentTime = glfwGetTime();
@@ -31,6 +51,17 @@ void Actor::draw(GLuint shaderProgram){
 		base->setParentModel(translation * rotation);
 		base->draw(shaderProgram);
 	}
+}
+
+void Actor::drawHP(GLuint shaderProgram) {
+	if(type == a_Tower) return;
+	glUniform3f(glGetUniformLocation(shaderProgram, "color"), 0.f, 1.f, 0.f);
+	mat4 hpMat = translate(mat4(1.f), vec3(0.f, .7f, 0.f)) * translation * scale(mat4(1.f), vec3((health / 500.f), .1f, .1f));
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &(hpMat[0][0]));
+
+	glBindVertexArray(VAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
 }
 
 Soldier::Soldier(OBJObject* o) : Actor(o){
