@@ -1,8 +1,8 @@
 #include "main.h"
 #include "Window.h"
 
-ServerGame * server;
-ClientGame * client;
+ServerGame * server = 0;
+ClientGame * client = 0;
 
 GLFWwindow* window;
 

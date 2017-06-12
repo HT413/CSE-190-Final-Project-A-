@@ -305,7 +305,8 @@ void update(){
 	if(!gameStart) lastTime = currTime;
 	if(currTime - lastUpdateTime > 0.04){
 		//server->update();
-		//client->update();
+		if(client) client->sendHandPos(handPos.x, handPos.y, handPos.z);
+		if(client) client->update();
 		lastUpdateTime = currTime;
 	}
 
@@ -388,6 +389,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp->setPosition(handPos.x, 0, handPos.z);
 					pickedUp->togglePlacing();
 					pickedUp->toggleActive();
+					if(client && !wasPickup)
+						client->sendUnitCreation(a_Soldier, pickedUp->getID());
 					pickedUp = 0;
 					wasPickup = false;
 				}
@@ -436,6 +439,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp->setPosition(handPos.x, 0, handPos.z);
 					pickedUp->togglePlacing();
 					pickedUp->toggleActive();
+					if(client && !wasPickup)
+						client->sendUnitCreation(a_Soldier, pickedUp->getID());
 					pickedUp = 0;
 					wasPickup = false;
 				}
@@ -484,6 +489,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp->setPosition(handPos.x, 0, handPos.z);
 					pickedUp->togglePlacing();
 					pickedUp->toggleActive();
+					if(client && !wasPickup)
+						client->sendUnitCreation(a_Soldier, pickedUp->getID());
 					pickedUp = 0;
 					wasPickup = false;
 				}
@@ -532,6 +539,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 					pickedUp->setPosition(handPos.x, 0, handPos.z);
 					pickedUp->togglePlacing();
 					pickedUp->toggleActive();
+					if(client && !wasPickup)
+						client->sendUnitCreation(a_Soldier, pickedUp->getID());
 					pickedUp = 0;
 					wasPickup = false;
 				}

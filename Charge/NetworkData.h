@@ -8,7 +8,11 @@
 enum PacketTypes {
 	INIT_CONNECTION = 0,
 	ACTION_EVENT = 1,
-	GAME_START_NOTICE = 2
+	GAME_START_NOTICE = 2,
+	RIFT_HAND_LOC = 3,
+	RIFT_HEAD_LOC = 4,
+	LEAP_HAND_LOC = 5,
+	UNIT_CREATION = 6
 };
 
 struct Packet {

@@ -1,6 +1,7 @@
 #include "ClientGame.h"
 #include "Globals.h"
-
+#include <sstream>
+#include <string>
 
 ClientGame::ClientGame()
 {
@@ -29,6 +30,36 @@ void ClientGame::sendActionPackets()
 
 	Packet packet;
 	packet.packet_type = ACTION_EVENT;
+
+	packet.serialize(packet_data);
+	NetworkService::sendMessage(network->ConnectSocket, packet_data, packet_size);
+}
+
+void ClientGame::sendHandPos(float x, float y, float z){
+	const unsigned int packet_size = 33 * sizeof(Packet);
+	std::ostringstream ss;
+	ss << "ZZ" << "," << x << "," << y << "," << z;
+	const char * str = ss.str().c_str();
+	char packet_data[packet_size];
+	strcpy(packet_data + 4, str);
+
+	Packet packet;
+	packet.packet_type = LEAP_HAND_LOC;
+
+	packet.serialize(packet_data);
+	NetworkService::sendMessage(network->ConnectSocket, packet_data, packet_size);
+}
+
+void ClientGame::sendUnitCreation(ACTOR_TYPE type, int id){
+	const unsigned int packet_size = 17 * sizeof(Packet);
+	std::ostringstream ss;
+	ss << "ZZ" << "," << type << "," << id;
+	const char * str = ss.str().c_str();
+	char packet_data[packet_size];
+	strcpy(packet_data + 4, str);
+
+	Packet packet;
+	packet.packet_type = UNIT_CREATION;
 
 	packet.serialize(packet_data);
 	NetworkService::sendMessage(network->ConnectSocket, packet_data, packet_size);

@@ -6,6 +6,8 @@
 #include "ClientNetwork.h"
 #include "NetworkData.h"
 
+extern enum ACTOR_TYPE;
+
 class ClientGame
 {
 public:
@@ -15,6 +17,8 @@ public:
 	ClientNetwork* network;
 
 	void sendActionPackets();
+	void sendHandPos(float, float, float);
+	void sendUnitCreation(ACTOR_TYPE, int);
 
 	char network_data[MAX_PACKET_SIZE];
 

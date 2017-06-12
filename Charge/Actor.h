@@ -4,7 +4,7 @@
 #include "Globals.h"
 #include "OBJObject.h"
 
-enum ACTOR_TYPE{a_Soldier, a_Tank, a_Wall, a_Cannon, a_Tower};
+enum ACTOR_TYPE{ a_Soldier, a_Tank, a_Wall, a_Cannon, a_Tower };
 
 class Actor
 {
@@ -28,6 +28,7 @@ public:
 	void draw(GLuint);
 	void setActionTime(double t){ actionTime = t; }
 	void setID(int i){ id = i; }
+	int getID(){ return id; }
 	virtual void move() = 0;
 	virtual void doAction() = 0;
 	ACTOR_TYPE getType(){ return type; }
