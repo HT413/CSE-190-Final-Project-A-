@@ -6,8 +6,10 @@
 #include "UI_Bar.h"
 #include "Actor.h"
 #include "Sphere.h"
+#include "Cube.h"
 
 #include <Leap.h>
+#include <glm/gtx/quaternion.hpp>
 
 #include <FreeImage.h>
 
@@ -100,14 +102,17 @@ bool gameStart;
 double lastUpdateTime;
 bool wasPickup;
 vec3 handPos = vec3(0.01, 0.01, 4.5);
+vec3 handOri = vec3(0, 0, 0);
 int objPickup;
 
 // OBJ models
 OBJObject* soldierObj, *tankObj, *wallObj, *cannonObj, *castleObj;
 Actor* pickedUp;
-Sphere *handSphere, *riftHandObject, *riftHeadObject;
+Cube *handObject, *riftHandObject, *riftHeadObject;
 vec3 riftHandPos = vec3(0, -1, 0);
 vec3 riftHeadPos = vec3(0, -1, 0);
+vec3 riftHandOri = vec3(0, 0, 0);
+vec3 riftHeadOri = vec3(0, 0, 0);
 
 const mat4 rShiftMat = translate(mat4(1.f), vec3(0.065, 0, 0));
 
@@ -301,12 +306,12 @@ void initObjects(){
 
 	// The hand spheres
 	glUseProgram(phongShader);
-	handSphere = new Sphere(20, 20);
-	handSphere->setMaterial(sphere_Green);
-	riftHandObject = new Sphere(20, 20);
-	riftHandObject->setMaterial(sphere_Blue);
-	riftHeadObject = new Sphere(20, 20);
-	riftHeadObject->setMaterial(sphere_Red);
+	handObject = new Cube();
+	handObject->setColor(vec3(0, 1, 0));
+	riftHandObject = new Cube();
+	riftHandObject->setColor(vec3(0, 0, 1));
+	riftHeadObject = new Cube();
+	riftHeadObject->setColor(vec3(1, 0, 0));
 
 	// Misc initializations
 	sessionScreenshots = 0;
@@ -354,7 +359,7 @@ void destroyObjects(){
 	if(sphere_Green) delete sphere_Green;
 	if(sphere_Blue) delete sphere_Blue;
 	if(sphere_Red) delete sphere_Red;
-	if(handSphere) delete handSphere;
+	if(handObject) delete handObject;
 	if(riftHandObject) delete riftHandObject;
 	if(riftHeadObject) delete riftHeadObject;
 	if(lightPositions) delete[] lightPositions;
@@ -374,6 +379,16 @@ void setRiftHand(vec3 v){
 void setRiftHead(vec3 v){
 	if(length(v) < .01f) return;
 	riftHeadPos = v;
+}
+
+void setRiftHandOri(vec3 v){
+	if(length(v) < .01f) return;
+	riftHandOri = v;
+}
+
+void setRiftHeadOri(vec3 v){
+	if(length(v) < .01f) return;
+	riftHeadOri = v;
 }
 
 void createNewUnit(ACTOR_TYPE type, int id){
@@ -438,6 +453,10 @@ void setLeapHand(vec3 pos){
 	handPos = pos;
 }
 
+void setLeapOri(vec3 pos){
+	handOri = pos;
+}
+
 void update(){
 	double currTime = glfwGetTime();
 	if(!gameStart) lastTime = currTime;
@@ -448,9 +467,22 @@ void update(){
 	}
 
 	if(gameStart){
-		handSphere->setModel(translate(mat4(1.f), handPos) * scale(mat4(1.f), vec3(.2f, .2f, .2f)));
-		riftHandObject->setModel(translate(mat4(1.f), riftHandPos) * scale(mat4(1.f), vec3(.2f, .2f, .2f)));
-		riftHeadObject->setModel(translate(mat4(1.f), riftHeadPos) * scale(mat4(1.f), vec3(.4f, .4f, .4f)));
+		handObject->setPos(handPos);
+		riftHandObject->setPos(riftHandPos);
+		riftHeadObject->setPos(riftHeadPos);
+
+		//float wH = sqrtf(1.f - length(handOri));
+		//quat leapQuat(wH, handOri.x, handOri.y, handOri.z);
+		//handObject->setRotation(toMat4(leapQuat));
+
+		float wL = sqrtf(1.f - length(riftHandOri));
+		quat riftHandQuat(wL, riftHandOri.x, riftHandOri.y, riftHandOri.z);
+		riftHandObject->setRotation(toMat4(riftHandQuat));
+
+		float wRO = sqrtf(1.f - length(riftHeadOri));
+		quat riftHeadQuat(wL, -riftHeadOri.x, -riftHeadOri.y, -riftHeadOri.z);
+		riftHeadObject->setRotation(toMat4(riftHeadQuat));
+
 		if(isGameOver) return;
 		if(pickedUp)
 			pickedUp->setPosition(handPos.x, handPos.y, handPos.z);
@@ -503,9 +535,6 @@ void displayCallback(GLFWwindow* window){
 			a->draw(objShader);
 		for(Actor *b : foeActors)
 			b->draw(objShader);
-		handSphere->draw(objShader);
-		riftHandObject->draw(objShader);
-		riftHeadObject->draw(objShader);
 
 		glUseProgram(unitHPShader);
 		glUniformMatrix4fv(glGetUniformLocation(unitHPShader, "projection"), 1, GL_FALSE, &(projection[0][0]));
@@ -514,6 +543,9 @@ void displayCallback(GLFWwindow* window){
 			a->drawHP(unitHPShader);
 		for(Actor *b : foeActors)
 			b->drawHP(unitHPShader);
+		handObject->draw(unitHPShader);
+		riftHandObject->draw(unitHPShader);
+		riftHeadObject->draw(unitHPShader);
 	}
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);

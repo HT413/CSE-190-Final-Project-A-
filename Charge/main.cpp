@@ -102,6 +102,15 @@ void SampleListener::onFrame(const Controller& controller) {
 		Vector handPos = firstHand.palmPosition();
 		vec3 leapHand = vec3(handPos.x / 20.f, (handPos.y - 200) / 20.f, 3.f + handPos.z / 20.f);
 		setLeapHand(leapHand);
+		Vector handOri = firstHand.palmNormal();
+		Vector from(0, 1, 0);
+		Vector H = from + handOri;
+		H = H.normalized();
+		Vector result;
+		result.x = from.y*H.z - from.z*H.y;
+		result.y = from.z*H.x - from.x*H.z;
+		result.z = from.x*H.y - from.y*H.x;
+		setLeapOri(vec3(result.x, result.y, result.z));
 	}
 }
 

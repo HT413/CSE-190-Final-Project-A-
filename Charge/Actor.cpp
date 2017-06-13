@@ -54,7 +54,7 @@ void Actor::draw(GLuint shaderProgram){
 }
 
 void Actor::drawHP(GLuint shaderProgram) {
-	if(type == a_Tower) return;
+	if(type == a_Tower || health < 0) return;
 	glUniform3f(glGetUniformLocation(shaderProgram, "color"), 0.f, 1.f, 0.f);
 	mat4 hpMat = translate(mat4(1.f), vec3(0.f, .7f, 0.f)) * translation * scale(mat4(1.f), vec3((health / 500.f), .1f, .1f));
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, &(hpMat[0][0]));
