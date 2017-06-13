@@ -77,7 +77,7 @@ void ClientGame::sendUnitCreation(float type, float id){
 void ClientGame::sendUnitPickup(float id) {
 	const unsigned int packet_size = 33 * sizeof(Packet);
 	std::ostringstream ss;
-	ss << "ZZ" << "," << id;
+	ss << "ZZ" << "," << "1.2345" << "," << id;
 
 	char* cstr = new char[32 * sizeof(Packet)];
 	std::strcpy(cstr, ss.str().c_str());
@@ -145,6 +145,10 @@ void ClientGame::update()
 
 		case RIFT_UNIT_PICK_UP:
 		{
+			if(unitPickedup()){
+				i += 32 * sizeof(Packet);
+				break;
+			}
 			std::stringstream ss;
 			std::vector<std::string> unitValues;
 			std::string split;
@@ -164,7 +168,7 @@ void ClientGame::update()
 			}
 
 			if(unitValues.size() > 1) {
-				int unitID = int(stof(unitValues[1]));
+				int unitID = int(stof(unitValues[2]));
 				cout << "Unit picked up has ID " << unitID << endl;
 				unitPickup(unitID);
 			}

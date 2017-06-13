@@ -333,14 +333,20 @@ void unitPickup(int id) {
 	}
 }
 
+bool unitPickedup(){
+	return (objPickup != 0);
+}
+
 void unitPlacedown() {
 	if(objPickup > 0) {
 		selfActors[objPickup - 2]->toggleActive();
 		selfActors[objPickup - 2]->togglePlacing();
+		selfActors[objPickup - 2]->setPosition(riftHandPos.x, 0, riftHandPos.z);
 	}
 	else {
 		foeActors[-2 - objPickup]->toggleActive();
 		foeActors[-2 - objPickup]->togglePlacing();
+		foeActors[-objPickup - 2]->setPosition(riftHandPos.x, 0, riftHandPos.z);
 	}
 	objPickup = 0;
 }
@@ -471,9 +477,9 @@ void update(){
 		riftHandObject->setPos(riftHandPos);
 		riftHeadObject->setPos(riftHeadPos);
 
-		//float wH = sqrtf(1.f - length(handOri));
-		//quat leapQuat(wH, handOri.x, handOri.y, handOri.z);
-		//handObject->setRotation(toMat4(leapQuat));
+		float wH = sqrtf(1.f - length(handOri));
+		quat leapQuat(wH, -handOri.x, -handOri.y, -handOri.z);
+		handObject->setRotation(toMat4(leapQuat));
 
 		float wL = sqrtf(1.f - length(riftHandOri));
 		quat riftHandQuat(wL, riftHandOri.x, riftHandOri.y, riftHandOri.z);

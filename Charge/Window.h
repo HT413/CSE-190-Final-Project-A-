@@ -23,5 +23,6 @@ void setRiftHeadOri(vec3);
 void createNewUnit(ACTOR_TYPE, int);
 void unitPickup(int);
 void unitPlacedown();
+bool unitPickedup();
 
 #endif
